@@ -42,7 +42,7 @@ The set of Styles CDA offers for one Season.
 _Avoid_: Collection
 
 **Season**:
-The selling period a Line belongs to.
+The selling period a Line belongs to. It is open from its start through its end, and only one Season is open at a time.
 _Avoid_: Drop
 
 ### Ordering
@@ -51,7 +51,7 @@ _Avoid_: Drop
 A Buyer's request for clothing from CDA, for Pickup.
 
 **Change request**:
-A Buyer's ask to change the Quantities or Pickup time on a placed Order. A Worker approves or denies it before Pickup, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities or Pickup time, on a placed Order. A Worker approves or denies it before Pickup, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
@@ -69,6 +69,10 @@ An Order whose clothing is ready for Pickup.
 **Completed**:
 An Order the Buyer has collected.
 _Avoid_: Fulfilled
+
+**Canceled**:
+An Order a Worker has stopped before it is paid.
+_Avoid_: Void
 
 **Pickup**:
 The Buyer collects an Order's clothing from the pickup location.
