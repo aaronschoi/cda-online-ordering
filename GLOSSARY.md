@@ -13,6 +13,10 @@ The business that sells clothing wholesale.
 A business that purchases CDA's clothing for resale.
 _Avoid_: Customer, client, retailer
 
+**Worker**:
+A person at CDA who handles scheduled Orders.
+_Avoid_: Staff, employee
+
 ### Goods
 
 **Style**:
