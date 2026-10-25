@@ -42,7 +42,7 @@ The set of Styles CDA offers for one Season.
 _Avoid_: Collection
 
 **Season**:
-The selling period a Line belongs to. It is open from its start through its end, and only one Season is open at a time.
+The selling period a Line belongs to. It is open from its start through its end, only one Season is open at a time, and Seasons do not overlap.
 _Avoid_: Drop
 
 ### Ordering
@@ -83,4 +83,4 @@ The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
 
 **Pickup time**:
-The time a Buyer names for collecting an Order.
+The time a Buyer names for collecting an Order. It is on or before the end of that Order's Season.
