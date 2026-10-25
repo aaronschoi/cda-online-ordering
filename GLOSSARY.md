@@ -41,7 +41,7 @@ _Avoid_: Drop
 ### Ordering
 
 **Order**:
-A Buyer's request to purchase clothing from CDA for Pickup.
+A Buyer's request for clothing from CDA, for Pickup.
 
 **Pickup**:
 The Buyer collects an Order's clothing from CDA.
