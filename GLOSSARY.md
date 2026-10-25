@@ -50,6 +50,10 @@ _Avoid_: Drop
 **Order**:
 A Buyer's request for clothing from CDA, for Pickup.
 
+**Change request**:
+A Buyer's ask to alter a placed Order. It can be approved or denied before Pickup, and the Order changes only when it is approved.
+_Avoid_: Edit
+
 **Pickup**:
 The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment, delivery
