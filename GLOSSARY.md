@@ -1,6 +1,6 @@
 # Wholesale ordering
 
-CDA sells clothing wholesale. This language names that trade.
+CDA sells clothing wholesale. Buyers place Orders for Pickup.
 
 ## Language
 
@@ -37,3 +37,12 @@ _Avoid_: Collection
 **Season**:
 The selling period a Line belongs to.
 _Avoid_: Drop
+
+### Ordering
+
+**Order**:
+A Buyer's request to purchase clothing from CDA for Pickup.
+
+**Pickup**:
+The Buyer collects an Order's clothing from CDA.
+_Avoid_: Shipment, delivery
