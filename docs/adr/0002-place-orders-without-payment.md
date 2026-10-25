@@ -1,8 +1,8 @@
 # Buyer pays when a Worker fulfills the Order
 
-A Buyer places an Order without paying. A Worker marks that Order paid when fulfilling it. Square does not show the unpaid Order on POS as an open ticket, and it rejects a completed fulfillment before payment, so the Worker does this in this app.
+A Buyer places an Order without paying. When a Worker fulfills it, this app records an external Square payment for the order total, then marks the Order Completed. Square rejects a completed fulfillment before payment, and it does not show the unpaid Order on POS as an open ticket.
 
 ## Considered options
 
 - Taking payment when the Buyer places the Order. Rejected.
-- Leaving the Order unpaid for staff to charge as an open ticket on Square POS. Square does not support that for an Order created through the API.
+- Charging a card in this app, or leaving an open ticket on Square POS. Rejected. The Worker has already taken cash, check, or a card outside this app.

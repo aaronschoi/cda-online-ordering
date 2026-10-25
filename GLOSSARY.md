@@ -51,8 +51,24 @@ _Avoid_: Drop
 A Buyer's request for clothing from CDA, for Pickup.
 
 **Change request**:
-A Buyer's ask to alter a placed Order. It can be approved or denied before Pickup, and the Order changes only when it is approved.
+A Buyer's ask to change the Quantities or Pickup time on a placed Order. A Worker approves or denies it before Pickup, and the Order changes only when it is approved.
 _Avoid_: Edit
+
+**Change cutoff**:
+The moment, a set duration before Pickup time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
+
+**Proposed**:
+An Order a Buyer has placed and a Worker has not reserved.
+
+**Reserved**:
+An Order a Worker has accepted for its Pickup time.
+
+**Prepared**:
+An Order whose clothing is ready for Pickup.
+
+**Completed**:
+An Order the Buyer has collected.
+_Avoid_: Fulfilled
 
 **Pickup**:
 The Buyer collects an Order's clothing from the pickup location.
