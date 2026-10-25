@@ -30,6 +30,9 @@ A size of a Style.
 One Style in one Color and one Size.
 _Avoid_: Variant
 
+**Quantity**:
+A positive whole number of units of one SKU.
+
 **Line**:
 The set of Styles CDA offers for one Season.
 _Avoid_: Collection
@@ -44,5 +47,12 @@ _Avoid_: Drop
 A Buyer's request for clothing from CDA, for Pickup.
 
 **Pickup**:
-The Buyer collects an Order's clothing from CDA.
+The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment, delivery
+
+**Pickup location**:
+The one place CDA hands an Order to a Buyer.
+_Avoid_: Store, branch
+
+**Pickup time**:
+The time a Buyer names for collecting an Order.
