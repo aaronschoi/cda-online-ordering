@@ -1,6 +1,6 @@
 # Wholesale ordering
 
-CDA sells clothing wholesale. Buyers place Orders for Pickup.
+CDA sells clothing wholesale. Buyers place Orders for Pickup or Delivery.
 
 ## Language
 
@@ -56,7 +56,7 @@ _Avoid_: Drop
 ### Ordering
 
 **Order**:
-A Buyer's request for clothing from CDA, for Pickup.
+A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both.
 
 **Confirmed**:
 An Order that will be filled.
@@ -71,27 +71,27 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities or Pickup time, on a placed Order. Staff approve or deny it before Pickup, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, or Delivery time, on a placed Order. Staff approve or deny it before the Buyer receives the clothing, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
-The moment, a set duration before Pickup time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
+The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
 
 **Proposed**:
 An Order a Buyer has placed and Staff have not reserved.
 
 **Reserved**:
-An Order Staff have accepted for its Pickup time.
+An Order Staff have accepted for its Pickup time or Delivery time.
 
 **Prepared**:
-An Order whose clothing is ready for Pickup.
+An Order whose clothing is ready for Pickup or Delivery.
 
 **Completed**:
 An Order Staff have marked done after they fulfill it.
 _Avoid_: Fulfilled
 
 **Canceled**:
-An Order Staff have stopped before the Buyer collects it.
+An Order Staff have stopped before the Buyer receives it.
 _Avoid_: Void
 
 **Pickup**:
@@ -99,20 +99,29 @@ The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment
 
 **Delivery**:
-A way to receive an Order at an address, limited to Delivery zips Staff have opened.
+A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available.
 _Avoid_: Shipment
 
+**Delivery address**:
+The address a Buyer gives for a Delivery Order.
+_Avoid_: Shipping address
+
 **Delivery zip**:
-A postal code Staff can open or close for Delivery.
+A postal code in a fixed set that Staff can open or close for Delivery. The map shows that set, and Staff do not add a zip from the map.
 _Avoid_: Zone
 
 **Delivery charge**:
-An amount that may be added to a Delivery Order. When it is zero or turned off, the Order has no delivery charge.
+One flat amount that may be added to every Delivery Order, fixed when the Order is placed. When it is zero or turned off, the Order has no delivery charge.
 _Avoid_: Rate, shipping fee
+
+**Delivery time**:
+The time a Buyer names for receiving a Delivery Order, in the pickup location's local time. It is on or before the end of that Order's Season. A time already inside the Change cutoff can still be chosen.
+_Avoid_: Window
 
 **Pickup location**:
 The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
 
 **Pickup time**:
-The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season.
+The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season. A time already inside the Change cutoff can still be chosen.
+_Avoid_: Window

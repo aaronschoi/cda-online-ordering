@@ -1,6 +1,6 @@
 # Change requests until the cutoff
 
-A Buyer may have one waiting Change request until the Change cutoff, while the Order is Proposed, Reserved, or Prepared. The request may add or remove SKUs on that Order's Line, or change Quantities or the Pickup time; approval updates the Order, leaves at least one SKU, and keeps Pickup on or before the Season's end. A waiting request blocks fulfillment, and canceling the Order denies it.
+A Buyer may have one waiting Change request until the Change cutoff, while the Order is Proposed, Reserved, or Prepared. The request may add or remove SKUs on that Order's Line, or change Quantities, the Pickup time, or the Delivery time; approval updates the Order, leaves at least one SKU, and keeps that time on or before the Season's end. A waiting request blocks fulfillment, and canceling the Order denies it.
 
 ## Considered options
 
