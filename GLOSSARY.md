@@ -106,6 +106,10 @@ _Avoid_: Shipment
 A postal code Staff can open or close for Delivery.
 _Avoid_: Zone
 
+**Delivery charge**:
+An amount that may be added to a Delivery Order. When it is zero or turned off, the Order has no delivery charge.
+_Avoid_: Rate, shipping fee
+
 **Pickup location**:
 The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
