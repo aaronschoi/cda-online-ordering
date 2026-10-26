@@ -58,6 +58,18 @@ _Avoid_: Drop
 **Order**:
 A Buyer's request for clothing from CDA, for Pickup.
 
+**Confirmed**:
+An Order that will be filled.
+_Avoid_: Approved
+
+**Unconfirmed**:
+An Order whose Reservation exceeds the units on hand and that Staff have not confirmed.
+_Avoid_: Pending
+
+**Confirmation**:
+Whether an Order is Confirmed or Unconfirmed. Units on hand covering the Reservation make it Confirmed. Otherwise it stays Unconfirmed until Staff confirm it.
+_Avoid_: Approval
+
 **Change request**:
 A Buyer's ask to add or remove SKUs, or to change the Quantities or Pickup time, on a placed Order. Staff approve or deny it before Pickup, and the Order changes only when it is approved.
 _Avoid_: Edit
@@ -75,7 +87,7 @@ An Order Staff have accepted for its Pickup time.
 An Order whose clothing is ready for Pickup.
 
 **Completed**:
-An Order the Buyer has collected.
+An Order Staff have marked done after they fulfill it.
 _Avoid_: Fulfilled
 
 **Canceled**:
@@ -91,4 +103,4 @@ The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
 
 **Pickup time**:
-The time a Buyer names for collecting an Order. It is on or before the end of that Order's Season.
+The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season.
