@@ -67,7 +67,7 @@ An Order whose Reservation exceeds the units on hand and that Staff have not con
 _Avoid_: Pending
 
 **Confirmation**:
-Whether an Order is Confirmed or Unconfirmed. Units on hand covering the Reservation make it Confirmed. Otherwise it stays Unconfirmed until Staff confirm it.
+Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its Reservation make it Confirmed. Otherwise it stays Unconfirmed until Staff confirm it.
 _Avoid_: Approval
 
 **Change request**:
