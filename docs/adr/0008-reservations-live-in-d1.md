@@ -1,6 +1,6 @@
 # Reservations are held in D1
 
-The reserved Quantity and SKU are stored in Cloudflare D1. Square's in-stock count is not reduced when an Order is placed, because Square moves those units to sold when the Order is completed, and the API cannot write its reserved-for-sale state.
+The reserved Quantity and SKU are stored in Cloudflare D1. Square's in-stock count is not reduced when an Order is placed, because Staff complete the sale in Square's own app and Square moves those units to sold then. The API cannot write its reserved-for-sale state.
 
 ## Considered options
 

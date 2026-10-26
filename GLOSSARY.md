@@ -13,9 +13,9 @@ The business that sells clothing wholesale.
 A business that purchases CDA's clothing for resale.
 _Avoid_: Customer, client, retailer
 
-**Worker**:
-A person at CDA who handles scheduled Orders.
-_Avoid_: Staff, employee
+**Staff**:
+A person at CDA who reviews Orders.
+_Avoid_: Worker, employee
 
 ### Goods
 
@@ -59,17 +59,17 @@ _Avoid_: Drop
 A Buyer's request for clothing from CDA, for Pickup.
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities or Pickup time, on a placed Order. A Worker approves or denies it before Pickup, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities or Pickup time, on a placed Order. Staff approve or deny it before Pickup, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
 The moment, a set duration before Pickup time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
 
 **Proposed**:
-An Order a Buyer has placed and a Worker has not reserved.
+An Order a Buyer has placed and Staff have not reserved.
 
 **Reserved**:
-An Order a Worker has accepted for its Pickup time.
+An Order Staff have accepted for its Pickup time.
 
 **Prepared**:
 An Order whose clothing is ready for Pickup.
@@ -79,7 +79,7 @@ An Order the Buyer has collected.
 _Avoid_: Fulfilled
 
 **Canceled**:
-An Order a Worker has stopped before it is paid.
+An Order Staff have stopped before the Buyer collects it.
 _Avoid_: Void
 
 **Pickup**:
