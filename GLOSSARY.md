@@ -96,7 +96,15 @@ _Avoid_: Void
 
 **Pickup**:
 The Buyer collects an Order's clothing from the pickup location.
-_Avoid_: Shipment, delivery
+_Avoid_: Shipment
+
+**Delivery**:
+A way to receive an Order at an address, limited to Delivery zips Staff have opened.
+_Avoid_: Shipment
+
+**Delivery zip**:
+A postal code Staff can open or close for Delivery.
+_Avoid_: Zone
 
 **Pickup location**:
 The one place CDA hands an Order to a Buyer.
