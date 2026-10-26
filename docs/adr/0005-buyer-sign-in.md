@@ -1,6 +1,6 @@
 # Buyers sign in with a code to their Square Customer email
 
-CDA creates each Buyer as a Square Customer before that Buyer can sign in. The Buyer signs in with a code sent to that customer's email. The app does not register Buyers and does not use a password for them.
+CDA creates each Buyer as a Square Customer before that Buyer can sign in. The Buyer signs in with a code sent to that customer's email. That sign-in code is the only email this app sends. The app does not register Buyers and does not use a password for them.
 
 ## Considered options
 

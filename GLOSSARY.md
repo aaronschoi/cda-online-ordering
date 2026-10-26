@@ -71,7 +71,7 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed or removed from the set. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
@@ -103,7 +103,7 @@ A way to receive an Order at a Delivery address. The Buyer can choose it only wh
 _Avoid_: Shipment
 
 **Delivery address**:
-The street, city, state, zip, and phone number a Buyer gives for a Delivery Order. The Delivery zip is the first five digits of that zip, and any further digits stay on the address. A Change request may move it to a different zip only when that zip is an open Delivery zip. A change that keeps the same zip, including a change to the phone number, can be approved after that zip is closed. The address changes only through an approved Change request.
+The street, city, state, zip, and phone number a Buyer gives for a Delivery Order. Delivery cannot be chosen without a phone number. The Delivery zip is the first five digits of that zip, and any further digits stay on the address. A Change request may move it to a different zip only when that zip is an open Delivery zip. A change that keeps the same zip, including a change to the phone number, can be approved after that zip is closed or removed from the set. The address changes only through an approved Change request.
 _Avoid_: Shipping address
 
 **Delivery note**:
@@ -111,7 +111,7 @@ Optional text a Buyer may add to a Delivery Order about receiving it. It may be 
 _Avoid_: Instructions, comment
 
 **Delivery zip**:
-The five-digit code Staff can open or close for Delivery. The map shows one only when Keystatic has its code and name and the repo has its shape. Staff do not add a zip from the map. Closing a zip leaves Orders already placed for it on Delivery.
+The five-digit code Staff can open or close for Delivery. The map shows one only when Keystatic has its code and name and the repo has its shape. Staff do not add a zip from the map. Closing a zip, or removing it from that set, leaves Orders already placed for it on Delivery. A removed zip cannot be chosen for a new Order or for a move.
 _Avoid_: Zone
 
 **Delivery charge**:
