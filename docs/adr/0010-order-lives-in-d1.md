@@ -1,6 +1,6 @@
 # The Order lives in D1 and the sale lives in Square
 
-The Order, its SKUs, Quantities, Prices, Pickup time, Confirmation, Change requests, and Reservations are stored in Cloudflare D1. Square holds the sale Staff create later, not this Order.
+The Order, its SKUs, Quantities, Prices, Pickup time, Confirmation, Change requests, and Reservations are stored in Cloudflare D1. Square holds the sale Staff create later, not this Order. The Order does not store that sale's id.
 
 ## Considered options
 
