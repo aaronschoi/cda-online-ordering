@@ -71,7 +71,7 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, or Delivery time, on a placed Order. Staff approve or deny it before the Buyer receives the clothing, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, or Delivery address, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a new Delivery address only when its zip is an open Delivery zip. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
@@ -103,11 +103,11 @@ A way to receive an Order at a Delivery address. The Buyer can choose it only wh
 _Avoid_: Shipment
 
 **Delivery address**:
-The address a Buyer gives for a Delivery Order.
+The address a Buyer gives for a Delivery Order. A Change request may replace it only when the new zip is an open Delivery zip.
 _Avoid_: Shipping address
 
 **Delivery zip**:
-A postal code in a fixed set that Staff can open or close for Delivery. The map shows that set, and Staff do not add a zip from the map.
+A postal code in a fixed set that Staff can open or close for Delivery. The map shows that set, and Staff do not add a zip from the map. Closing a zip leaves Orders already placed for it on Delivery.
 _Avoid_: Zone
 
 **Delivery charge**:
