@@ -71,27 +71,27 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed or removed from the set. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed or removed from the set. Staff approve or deny the whole request before the Buyer receives the clothing, and the Order changes only when it is approved. The Buyer may withdraw a waiting request. Withdrawal leaves the Order unchanged. After a request is approved, denied, or withdrawn, the Buyer may submit another until the Change cutoff.
 _Avoid_: Edit
 
 **Change cutoff**:
 The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
 
 **Proposed**:
-An Order a Buyer has placed and Staff have not reserved.
+An Order a Buyer has placed and Staff have not reserved. Staff next move a Confirmed Order to Reserved. An Unconfirmed Order stays Proposed until Staff confirm it.
 
 **Reserved**:
-An Order Staff have accepted for its Pickup time or Delivery time.
+An Order Staff have accepted for its Pickup time or Delivery time. Staff next move it to Prepared.
 
 **Prepared**:
-An Order whose clothing is ready for Pickup or Delivery.
+An Order whose clothing is ready for Pickup or Delivery. Staff next move it to Completed.
 
 **Completed**:
-An Order Staff have marked done after they fulfill it.
+An Order Staff have marked done after they fulfill it. It stays Completed.
 _Avoid_: Fulfilled
 
 **Canceled**:
-An Order Staff have stopped before the Buyer receives it.
+An Order Staff have stopped, from Proposed, Reserved, or Prepared, before the Buyer receives it.
 _Avoid_: Void
 
 **Pickup**:
