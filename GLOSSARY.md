@@ -37,6 +37,10 @@ _Avoid_: Variant
 **Quantity**:
 A positive whole number of units of one SKU.
 
+**Reservation**:
+Units of a SKU held for an Order when the Buyer places it.
+_Avoid_: Hold, allocation
+
 **Price**:
 The amount for one SKU on an Order, fixed when that SKU is added.
 _Avoid_: Cost
