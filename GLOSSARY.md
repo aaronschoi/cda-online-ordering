@@ -37,6 +37,10 @@ _Avoid_: Variant
 **Quantity**:
 A positive whole number of units of one SKU.
 
+**Price**:
+The amount for one SKU on an Order, fixed when that SKU is added.
+_Avoid_: Cost
+
 **Line**:
 The set of Styles CDA offers for one Season.
 _Avoid_: Collection
