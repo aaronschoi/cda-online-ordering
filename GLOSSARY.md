@@ -71,7 +71,7 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, or Delivery address, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a new Delivery address only when its zip is an open Delivery zip. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, or Delivery address, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed. Staff approve or deny the request before the Buyer receives the clothing, and the Order changes only when it is approved.
 _Avoid_: Edit
 
 **Change cutoff**:
@@ -99,11 +99,11 @@ The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment
 
 **Delivery**:
-A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available.
+A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available. Delivery uses the same statuses as Pickup.
 _Avoid_: Shipment
 
 **Delivery address**:
-The address a Buyer gives for a Delivery Order. A Change request may replace it only when the new zip is an open Delivery zip.
+The street, city, state, and zip a Buyer gives for a Delivery Order. A Change request may move it to a different zip only when that zip is an open Delivery zip. A change that keeps the same zip can be approved after that zip is closed.
 _Avoid_: Shipping address
 
 **Delivery zip**:
