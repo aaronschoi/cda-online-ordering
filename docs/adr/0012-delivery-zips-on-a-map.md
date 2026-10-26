@@ -6,7 +6,7 @@ Staff open and close Delivery zips from a map in the staff area. Each toggle is 
 
 A Delivery Order has a Delivery time with the same bounds as a Pickup time: the pickup location's local time, on or before the Season's end. The Change cutoff is that same duration before the time. A time already inside the cutoff can still be chosen. Delivery uses the same statuses as Pickup. Prepared means the clothing is ready. Completed means Staff have fulfilled the sale in Square's app and marked the Order done here.
 
-The map draws one boundary per Delivery zip from a file in the repo. Keystatic holds the code and the name. Staff toggle open or closed on those shapes and do not draw a boundary. The boundary is what the map draws. Delivery is allowed by the zip code on the address.
+The map draws one boundary per Delivery zip from a file in the repo. Keystatic holds the code and the name. Staff toggle open or closed on those shapes and do not draw a boundary. The boundary is what the map draws. Delivery is allowed by the zip code on the address. A Delivery address includes a phone number. A Delivery Order may include a Delivery note, and that note may be blank.
 
 ## Considered options
 
@@ -16,3 +16,4 @@ The map draws one boundary per Delivery zip from a file in the repo. Keystatic h
 - Letting Staff add any postal code from the map. Rejected. The map shows a fixed set.
 - Adding a status for clothing on its way to the Buyer. Rejected. Delivery uses the same statuses as Pickup.
 - Testing the street against the boundary to allow Delivery. Rejected. The zip code on the address decides.
+- Keeping the Delivery address to street, city, state, and zip. Rejected. It includes a phone number, and the Order may include a Delivery note.
