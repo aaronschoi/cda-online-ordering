@@ -10,11 +10,11 @@ CDA sells clothing wholesale. Buyers place Orders for Pickup or Delivery.
 The business that sells clothing wholesale.
 
 **Buyer**:
-A business that purchases CDA's clothing for resale. A Buyer sees only that Buyer's Orders, including Completed and Canceled.
+A business that purchases CDA's clothing for resale. A Buyer sees only that Buyer's Orders, including Completed and Canceled. The Buyer's email is that Square Customer email and is not a Staff login.
 _Avoid_: Customer, client, retailer
 
 **Staff**:
-A person at CDA who reviews Orders. Staff see every Order.
+A person at CDA who reviews Orders. Staff see every Order. A Staff email is not a Square Customer email.
 _Avoid_: Worker, employee
 
 ### Goods
@@ -56,7 +56,7 @@ _Avoid_: Drop
 ### Ordering
 
 **Order**:
-A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it, for the Season open then, with at least one SKU. If no Season is open, the Buyer cannot place one. Placing needs a Square price for every SKU and a reading of the units on hand. If either is missing, nothing is stored.
+A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it, for the Season open then, with at least one SKU. If no Season is open, the Buyer cannot place one. Placing needs a Square price for every SKU, a reading of the units on hand, and the Delivery charge setting. If any of those cannot be read, nothing is stored.
 
 **Confirmed**:
 An Order that will be filled.
@@ -75,7 +75,7 @@ A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, D
 _Avoid_: Edit
 
 **Change cutoff**:
-The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The Buyer may still withdraw a request that is already waiting. The same duration applies to every Order.
+The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. Submitting needs that duration and the Line. If either cannot be read, the request is not submitted. The Buyer may still withdraw a request that is already waiting. The same duration applies to every Order.
 
 **Proposed**:
 An Order a Buyer has placed and Staff have not reserved. Staff next move a Confirmed Order to Reserved. An Unconfirmed Order that is still Proposed stays there until Staff confirm it.
