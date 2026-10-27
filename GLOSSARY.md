@@ -10,11 +10,11 @@ CDA sells clothing wholesale. Buyers place Orders for Pickup or Delivery.
 The business that sells clothing wholesale.
 
 **Buyer**:
-A business that purchases CDA's clothing for resale.
+A business that purchases CDA's clothing for resale. A Buyer sees only that Buyer's Orders, including Completed and Canceled.
 _Avoid_: Customer, client, retailer
 
 **Staff**:
-A person at CDA who reviews Orders.
+A person at CDA who reviews Orders. Staff see every Order.
 _Avoid_: Worker, employee
 
 ### Goods
@@ -67,7 +67,7 @@ An Order whose Reservation exceeds the units on hand and that Staff have not con
 _Avoid_: Pending
 
 **Confirmation**:
-Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its Reservation make it Confirmed. Otherwise it stays Unconfirmed until Staff confirm it.
+Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its Reservation make it Confirmed, including after an approved Change request. Otherwise it stays Unconfirmed until Staff confirm it. A restock does not confirm it. An approved Change request can make a Reserved or Prepared Order Unconfirmed and leave it on that step. Staff cannot mark the Order Completed while it is Unconfirmed.
 _Avoid_: Approval
 
 **Change request**:
@@ -78,16 +78,16 @@ _Avoid_: Edit
 The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The Buyer may still withdraw a request that is already waiting. The same duration applies to every Order.
 
 **Proposed**:
-An Order a Buyer has placed and Staff have not reserved. Staff next move a Confirmed Order to Reserved. An Unconfirmed Order stays Proposed until Staff confirm it.
+An Order a Buyer has placed and Staff have not reserved. Staff next move a Confirmed Order to Reserved. An Unconfirmed Order that is still Proposed stays there until Staff confirm it.
 
 **Reserved**:
-An Order Staff have accepted for its Pickup time or Delivery time. Staff next move it to Prepared.
+An Order Staff have accepted for its Pickup time or Delivery time. Staff next move it to Prepared. An approved Change request can make it Unconfirmed and leave it Reserved.
 
 **Prepared**:
-An Order whose clothing is ready for Pickup or Delivery. Staff next move it to Completed.
+An Order whose clothing is ready for Pickup or Delivery. Staff next move it to Completed when it is Confirmed. An approved Change request can make it Unconfirmed and leave it Prepared.
 
 **Completed**:
-An Order Staff have marked done after they fulfill it. It stays Completed.
+An Order Staff have marked done after they fulfill it. It stays Completed. Staff mark it Completed when it is Confirmed and no Change request is waiting.
 _Avoid_: Fulfilled
 
 **Canceled**:
@@ -119,7 +119,7 @@ One flat amount that may be added to every Delivery Order, fixed when the Order 
 _Avoid_: Rate, shipping fee
 
 **Delivery time**:
-The time a Buyer names for receiving a Delivery Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen.
+The time a Buyer names for receiving a Delivery Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen. Its arrival does not move the Order.
 _Avoid_: Window
 
 **Pickup location**:
@@ -127,5 +127,5 @@ The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
 
 **Pickup time**:
-The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen.
+The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen. Its arrival does not move the Order.
 _Avoid_: Window
