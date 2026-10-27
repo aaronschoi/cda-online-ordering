@@ -46,7 +46,7 @@ The amount for one SKU on an Order, fixed when that SKU is added.
 _Avoid_: Cost
 
 **Line**:
-The set of Styles CDA offers for one Season.
+The set of Styles CDA offers for one Season. A Change request can add a SKU only when its Style is on the Line at submission. A SKU already on an Order stays on it, with its Quantity and Price, after it leaves the Line or the catalog.
 _Avoid_: Collection
 
 **Season**:
@@ -56,7 +56,7 @@ _Avoid_: Drop
 ### Ordering
 
 **Order**:
-A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both.
+A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it.
 
 **Confirmed**:
 An Order that will be filled.
@@ -123,7 +123,7 @@ The time a Buyer names for receiving a Delivery Order, in the pickup location's 
 _Avoid_: Window
 
 **Pickup location**:
-The one Square Location where CDA hands an Order to a Buyer. Its name, address, and local time come from that Location.
+The one Square Location this app uses, where CDA hands an Order to a Buyer. Its name, address, and local time come from that Location. Any other Square Location is outside this app.
 _Avoid_: Store, branch
 
 **Pickup time**:
