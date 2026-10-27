@@ -10,11 +10,11 @@ CDA sells clothing wholesale. Buyers place Orders for Pickup or Delivery.
 The business that sells clothing wholesale.
 
 **Buyer**:
-A business that purchases CDA's clothing for resale. A Buyer sees only that Buyer's Orders, including Completed and Canceled. The Buyer's email is that Square Customer email and is not a Staff login.
+A business that purchases CDA's clothing for resale. After signing in, a Buyer sees the open Line and only that Buyer's Orders, including Completed and Canceled. A signed-out visitor sees neither Styles, prices, nor Orders. The Buyer's email is that Square Customer email and is not a Staff login.
 _Avoid_: Customer, client, retailer
 
 **Staff**:
-A person at CDA who reviews Orders. Staff see every Order. A Staff email is not a Square Customer email.
+A person at CDA who reviews Orders. Staff see every Order and the units on hand. A Staff email is not a Square Customer email.
 _Avoid_: Worker, employee
 
 ### Goods
@@ -46,7 +46,7 @@ The amount for one SKU on an Order, fixed when that SKU is added. An added SKU o
 _Avoid_: Cost
 
 **Line**:
-The set of Styles CDA offers for one Season. Buyers choosing SKUs see the Line of the open Season, and only SKUs with a Square price, including when the units on hand are zero. A Style with no priced SKU is left off that list. A Change request can add a SKU only when its Style is on the Line at submission. A SKU already on an Order stays on it, with its Quantity and Price, after it leaves the Line or the catalog.
+The set of Styles CDA offers for one Season. After signing in, Buyers choosing SKUs see the Line of the open Season, and only SKUs with a Square price, including when the units on hand are zero. That list shows each SKU, its picture, and its Price, and leaves the units on hand off it. A Style with no priced SKU is left off that list. A Change request can add a SKU only when its Style is on the Line at submission. A SKU already on an Order stays on it, with its Quantity and Price, after it leaves the Line or the catalog.
 _Avoid_: Collection
 
 **Season**:
@@ -67,7 +67,7 @@ An Order whose Reservation exceeds the units on hand and that Staff have not con
 _Avoid_: Pending
 
 **Confirmation**:
-Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its Reservation make it Confirmed, including after an approved Change request. Otherwise it stays Unconfirmed until Staff confirm it. A restock does not confirm it. An approved Change request can make a Reserved or Prepared Order Unconfirmed and leave it on that step. Staff cannot mark the Order Completed while it is Unconfirmed.
+Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its Reservation make it Confirmed, including after an approved Change request. Otherwise it stays Unconfirmed until Staff confirm it. A restock does not confirm it. An approved Change request can make a Reserved or Prepared Order Unconfirmed and leave it on that step. Staff cannot mark the Order Completed while it is Unconfirmed. A Buyer sees Confirmation on the Order after placing it.
 _Avoid_: Approval
 
 **Change request**:
