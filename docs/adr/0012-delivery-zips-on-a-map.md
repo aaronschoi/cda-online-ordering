@@ -1,6 +1,6 @@
 # Delivery zips are toggled on a map and stored in D1
 
-An Order is for Pickup or for Delivery, not both. Delivery can be chosen only when the Delivery address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available. If the Delivery zip set or the open and closed toggles cannot be read, Delivery cannot be chosen and Pickup can still be placed.
+An Order is for Pickup or for Delivery, not both. Delivery can be chosen only when the Delivery address's zip is an open Delivery zip, and that zip is checked again at place. A closed zip, or a zip that is not on the map, leaves Pickup available. A Delivery place does not go through when the zip is closed at that moment. The Buyer can place that clothing for Pickup. If the Delivery zip set or the open and closed toggles cannot be read, Delivery cannot be chosen and Pickup can still be placed.
 
 Staff open and close Delivery zips from a map in the staff area. Each toggle is stored in Cloudflare D1. The map shows a fixed set of zips, and Staff do not add a zip from the map. Closing a zip leaves Orders already placed for it on Delivery. Keystatic holds each zip's code and name, and does not hold the toggles, because Staff change them while working and Keystatic writes through GitHub.
 
@@ -12,6 +12,7 @@ The map draws one boundary per Delivery zip from a file in the repo. Keystatic h
 
 - Letting one Order be both Pickup and Delivery. Rejected.
 - Blocking the Order entirely when the zip is closed. Rejected. Pickup stays available.
+- Treating a zip that was open when the Buyer chose Delivery as still open at place. Rejected. It is checked again at place.
 - Blocking Pickup when the Delivery zip set or its toggles cannot be read. Rejected. Delivery cannot be chosen, and Pickup can still be placed.
 - Editing Delivery zip toggles in Keystatic. Rejected. Toggles change while Staff work, and Keystatic writes through GitHub.
 - Letting Staff add any postal code from the map. Rejected. The map shows a fixed set.

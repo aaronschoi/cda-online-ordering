@@ -20,18 +20,18 @@ _Avoid_: Worker, employee
 ### Goods
 
 **Style**:
-A clothing design CDA sells. Its name, description, and image come from Square's catalog.
+A clothing design CDA sells. Its name, description, and image come from Square's catalog. The description is read from Square.
 _Avoid_: Product, item, design
 
 **Color**:
-A color of a Style.
+A color of a Style. The SKUs of one Style and Color share one picture from Square. When that picture is missing, Buyers see the Style picture.
 _Avoid_: Colorway
 
 **Size**:
 A size of a Style.
 
 **SKU**:
-One Style in one Color and one Size.
+One Style in one Color and one Size. An Order remembers the Style name, Color, and Size from when that SKU was added.
 _Avoid_: Variant
 
 **Quantity**:
@@ -99,7 +99,7 @@ The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment
 
 **Delivery**:
-A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available. If the Delivery zip set or the open and closed toggles cannot be read, Delivery cannot be chosen and Pickup can still be placed. Delivery uses the same statuses as Pickup.
+A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip, and the zip is checked again when the Buyer places the Order. A closed zip, or a zip that is not on the map, leaves Pickup available. If the Delivery zip set or the open and closed toggles cannot be read, Delivery cannot be chosen and Pickup can still be placed. Delivery uses the same statuses as Pickup.
 _Avoid_: Shipment
 
 **Delivery address**:
