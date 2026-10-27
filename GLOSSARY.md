@@ -42,7 +42,7 @@ Units of a SKU held for an Order when the Buyer places it.
 _Avoid_: Hold, allocation
 
 **Price**:
-The amount for one SKU on an Order, fixed when that SKU is added.
+The amount for one SKU on an Order, fixed when that SKU is added. An added SKU on a Change request takes the Square price at approval. A missing price blocks approval of that whole request.
 _Avoid_: Cost
 
 **Line**:
@@ -50,13 +50,13 @@ The set of Styles CDA offers for one Season. A Change request can add a SKU only
 _Avoid_: Collection
 
 **Season**:
-The selling period a Line belongs to. It is open from its start through its end, only one Season is open at a time, and Seasons do not overlap.
+The selling period a Line belongs to. It is open from its start through its end, only one Season is open at a time, and Seasons do not overlap. An Order takes the Season open when the Buyer places it, and keeps that Season.
 _Avoid_: Drop
 
 ### Ordering
 
 **Order**:
-A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it.
+A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it, for the Season open then, with at least one SKU. If no Season is open, the Buyer cannot place one. Placing needs a Square price for every SKU and a reading of the units on hand. If either is missing, nothing is stored.
 
 **Confirmed**:
 An Order that will be filled.
