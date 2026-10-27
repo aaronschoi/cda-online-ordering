@@ -7,6 +7,7 @@ A Buyer may have one waiting Change request until the Change cutoff, while the O
 - Leaving a placed Order unchanged by the Buyer. Rejected.
 - Closing Change requests when the Order becomes Prepared. Rejected. The Change cutoff closes them.
 - Letting a Change request switch Pickup and Delivery. Rejected. That choice is fixed when the Order is placed.
+- Dropping a SKU from an Order when it leaves the Line or the catalog. Rejected. It stays, with its Quantity and Price.
 - Approving a move to a closed or removed Delivery zip. Rejected. A change that keeps the same zip can be approved after that zip is closed or removed from the set.
 - Letting Staff rewrite a Delivery address. Rejected. The Buyer submits the change.
 - Approving one part of a Change request and denying the rest. Rejected.
