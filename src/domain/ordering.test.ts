@@ -106,11 +106,16 @@ function mutableSquare() {
 
 function outbox() {
   const messages: { email: string; code: string }[] = []
+  let failSend = false
   return {
     messages,
+    failSend(value: boolean) {
+      failSend = value
+    },
     mailer: {
       async sendSignInCode(email: string, code: string) {
         messages.push({ email, code })
+        if (failSend) throw new Error("mail down")
       },
     },
     last(email: string) {
@@ -252,6 +257,30 @@ describe("ordering", () => {
     app.content.fail.charge = true
     expect(await app.ordering.placeOrder(session, pickup())).toEqual({ ok: false, error: "unreadable" })
     expect(await countOrders(app)).toBe(0)
+  })
+
+  it("stores no Delivery charge when the amount is zero, and an approved Change request leaves the charge", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const staff = await asStaff(app)
+    await app.ordering.setDeliveryZip(staff, "90026", true)
+    app.content.data.deliveryChargeCents = 0
+    const free = await placed(app.ordering, session, delivery())
+    expect(free.deliveryChargeCents).toBeNull()
+    app.content.data.deliveryChargeCents = 1500
+    const charged = await placed(app.ordering, session, delivery("trouser-ink-30"))
+    expect(charged.deliveryChargeCents).toBe(1500)
+    app.content.data.deliveryChargeEnabled = false
+    app.content.data.deliveryChargeCents = 0
+    const changed = await app.ordering.submitChange(session, charged.id, {
+      lines: [{ skuId: "trouser-ink-30", quantity: 2 }],
+    })
+    if (!changed.ok) throw new Error(changed.error)
+    const approved = await app.ordering.approveChange(staff, charged.id)
+    if (!approved.ok) throw new Error(approved.error)
+    expect(approved.value.deliveryChargeCents).toBe(1500)
+    expect(approved.value.lines[0]?.quantity).toBe(2)
+    expect(approved.value.goodsCents).toBe(32000)
   })
 
   it("places Pickup with no Delivery charge and fixes a Delivery charge", async () => {
@@ -611,6 +640,142 @@ describe("ordering", () => {
     const opened = await app.ordering.setDeliveryZip(staff, "90026", true)
     if (!opened.ok) throw new Error(opened.error)
     expect(opened.value.find((zip) => zip.code === "90026")?.open).toBe(true)
+  })
+
+  it("does not move an Order when its Pickup time arrives", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const order = await placed(app.ordering, session, pickup("jacket-indigo-1", 1, "2026-10-27T12:00"))
+    expect(order.step).toBe("proposed")
+    app.setNow(new Date("2026-10-28T20:00:00.000Z"))
+    const later = await app.ordering.orderFor(session, order.id)
+    if (!later.ok) throw new Error(later.error)
+    expect(later.value.step).toBe("proposed")
+    expect(later.value.confirmation).toBe("confirmed")
+  })
+
+  it("still shows a Buyer a Completed Order and a Canceled Order", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const staff = await asStaff(app)
+    const done = await placed(app.ordering, session, pickup("jacket-indigo-1"))
+    const stopped = await placed(app.ordering, session, pickup("trouser-ink-30"))
+    await app.ordering.advanceOrder(staff, done.id)
+    await app.ordering.advanceOrder(staff, done.id)
+    await app.ordering.advanceOrder(staff, done.id)
+    await app.ordering.cancelOrder(staff, stopped.id)
+    const orders = await app.ordering.ordersFor(session)
+    if (!orders.ok) throw new Error(orders.error)
+    expect(orders.value.map((order) => order.step)).toEqual(["completed", "canceled"])
+    expect(JSON.stringify(orders.value)).not.toContain("unitsOnHand")
+  })
+
+  it("does not submit a Change request when the cutoff or the Line cannot be read", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const order = await placed(app.ordering, session)
+    app.content.fail.cutoff = true
+    expect(await app.ordering.submitChange(session, order.id, { lines: [{ skuId: "jacket-indigo-1", quantity: 2 }] })).toEqual({
+      ok: false,
+      error: "unreadable",
+    })
+    app.content.fail.cutoff = false
+    app.content.fail.line = true
+    expect(await app.ordering.submitChange(session, order.id, { lines: [{ skuId: "jacket-indigo-1", quantity: 2 }] })).toEqual({
+      ok: false,
+      error: "unreadable",
+    })
+    const same = await app.ordering.orderFor(session, order.id)
+    if (!same.ok) throw new Error(same.error)
+    expect(same.value.waitingChange).toBeNull()
+    expect(same.value.lines[0]?.quantity).toBe(1)
+  })
+
+  it("refuses an expired sign-in code, a code already used, and a code whose email was not sent", async () => {
+    const app = await world()
+    app.mail.failSend(true)
+    expect(await app.ordering.requestBuyerCode("buyer@atelier.example")).toEqual({ ok: false, error: "unreadable" })
+    const leaked = app.mail.last("buyer@atelier.example")
+    expect(await app.ordering.signInBuyer("buyer@atelier.example", leaked)).toEqual({ ok: false, error: "refused" })
+    app.mail.failSend(false)
+    expect((await app.ordering.requestBuyerCode("buyer@atelier.example")).ok).toBe(true)
+    const code = app.mail.last("buyer@atelier.example")
+    app.setNow(new Date("2026-10-27T18:10:00.000Z"))
+    expect(await app.ordering.signInBuyer("buyer@atelier.example", code)).toEqual({ ok: false, error: "refused" })
+    app.setNow(new Date("2026-10-27T18:00:00.000Z"))
+    const session = await asBuyer(app)
+    expect(session.buyerName).toBe("Atelier North")
+    expect(await app.ordering.signInBuyer("buyer@atelier.example", app.mail.last("buyer@atelier.example"))).toEqual({
+      ok: false,
+      error: "refused",
+    })
+  })
+
+  it("removes a SKU at quantity 0 and stores nothing when every Quantity is 0", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const staff = await asStaff(app)
+    expect(await app.ordering.placeOrder(session, { ...pickup(), lines: [{ skuId: "jacket-indigo-1", quantity: 0 }] })).toEqual({
+      ok: false,
+      error: "empty-order",
+    })
+    expect(await app.ordering.placeOrder(session, { ...pickup(), lines: [{ skuId: "jacket-indigo-1", quantity: 1.5 }] })).toEqual({
+      ok: false,
+      error: "bad-quantity",
+    })
+    expect(await countOrders(app)).toBe(0)
+    const order = await placed(app.ordering, session, {
+      lines: [
+        { skuId: "jacket-indigo-1", quantity: 1 },
+        { skuId: "trouser-ink-30", quantity: 1 },
+      ],
+      fulfillment: "pickup",
+      scheduledLocal: "2026-11-12T10:00",
+    })
+    const changed = await app.ordering.submitChange(session, order.id, {
+      lines: [
+        { skuId: "jacket-indigo-1", quantity: 0 },
+        { skuId: "trouser-ink-30", quantity: 2 },
+      ],
+    })
+    if (!changed.ok) throw new Error(changed.error)
+    const approved = await app.ordering.approveChange(staff, order.id)
+    if (!approved.ok) throw new Error(approved.error)
+    expect(approved.value.lines.map((line) => line.skuId)).toEqual(["trouser-ink-30"])
+    expect(approved.value.lines[0]?.quantity).toBe(2)
+  })
+
+  it("sends no email when an Order is placed, changed, or moved", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const staff = await asStaff(app)
+    const before = app.mail.messages.length
+    const order = await placed(app.ordering, session)
+    await app.ordering.submitChange(session, order.id, { lines: [{ skuId: "jacket-indigo-1", quantity: 2 }] })
+    await app.ordering.denyChange(staff, order.id)
+    await app.ordering.submitChange(session, order.id, { lines: [{ skuId: "jacket-indigo-1", quantity: 2 }] })
+    await app.ordering.approveChange(staff, order.id)
+    await app.ordering.advanceOrder(staff, order.id)
+    await app.ordering.cancelOrder(staff, order.id)
+    expect(app.mail.messages).toHaveLength(before)
+  })
+
+  it("does not unconfirm an Order when a Change request leaves the Quantities and the units on hand drop", async () => {
+    const app = await world()
+    const session = await asBuyer(app)
+    const staff = await asStaff(app)
+    const order = await placed(app.ordering, session)
+    expect(order.confirmation).toBe("confirmed")
+    app.square.onHand["jacket-indigo-1"] = 0
+    await app.ordering.submitChange(session, order.id, {
+      lines: [{ skuId: "jacket-indigo-1", quantity: 1 }],
+      scheduledLocal: "2026-11-12T11:00",
+    })
+    const approved = await app.ordering.approveChange(staff, order.id)
+    if (!approved.ok) throw new Error(approved.error)
+    expect(approved.value.confirmation).toBe("confirmed")
+    expect(approved.value.scheduledLocal).toBe("2026-11-12T11:00")
+    expect(approved.value.lines[0]?.quantity).toBe(1)
   })
 
   it("refuses a time after the Season ends", async () => {
