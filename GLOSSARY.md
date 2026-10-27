@@ -20,7 +20,7 @@ _Avoid_: Worker, employee
 ### Goods
 
 **Style**:
-A clothing design CDA sells. Its name, description, and image come from Square's catalog. The description is read from Square.
+A clothing design CDA sells. Its name, description, and image come from Square's catalog.
 _Avoid_: Product, item, design
 
 **Color**:
@@ -31,7 +31,7 @@ _Avoid_: Colorway
 A size of a Style.
 
 **SKU**:
-One Style in one Color and one Size. An Order remembers the Style name, Color, and Size from when that SKU was added.
+One Style in one Color and one Size. An Order remembers the Style name, description, Color, and Size on that SKU from when it was added.
 _Avoid_: Variant
 
 **Quantity**:
