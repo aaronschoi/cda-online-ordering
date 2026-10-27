@@ -123,7 +123,7 @@ The time a Buyer names for receiving a Delivery Order, in the pickup location's 
 _Avoid_: Window
 
 **Pickup location**:
-The one place CDA hands an Order to a Buyer.
+The one Square Location where CDA hands an Order to a Buyer. Its name, address, and local time come from that Location.
 _Avoid_: Store, branch
 
 **Pickup time**:
