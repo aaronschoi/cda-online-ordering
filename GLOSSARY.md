@@ -24,14 +24,14 @@ A clothing design CDA sells. Its name, description, and image come from Square's
 _Avoid_: Product, item, design
 
 **Color**:
-A color of a Style. The SKUs of one Style and Color share one picture from Square. When that picture is missing, Buyers see the Style picture.
+A color of a Style. The SKUs of one Style and Color share one picture from Square. When that picture is missing, or those SKUs do not show the same picture, Buyers see the Style picture.
 _Avoid_: Colorway
 
 **Size**:
 A size of a Style.
 
 **SKU**:
-One Style in one Color and one Size. An Order remembers the Style name, description, Color, and Size on that SKU from when it was added.
+One Style in one Color and one Size. An Order remembers the Style name, description, Color, and Size on that SKU from when it was added. The description is the Style's description from that moment. A SKU has no description of its own.
 _Avoid_: Variant
 
 **Quantity**:
@@ -46,7 +46,7 @@ The amount for one SKU on an Order, fixed when that SKU is added. An added SKU o
 _Avoid_: Cost
 
 **Line**:
-The set of Styles CDA offers for one Season. A Change request can add a SKU only when its Style is on the Line at submission. A SKU already on an Order stays on it, with its Quantity and Price, after it leaves the Line or the catalog.
+The set of Styles CDA offers for one Season. Buyers choosing SKUs see the Line of the open Season, and only SKUs with a Square price, including when the units on hand are zero. A Style with no priced SKU is left off that list. A Change request can add a SKU only when its Style is on the Line at submission. A SKU already on an Order stays on it, with its Quantity and Price, after it leaves the Line or the catalog.
 _Avoid_: Collection
 
 **Season**:
