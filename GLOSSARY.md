@@ -20,7 +20,7 @@ _Avoid_: Worker, employee
 ### Goods
 
 **Style**:
-A clothing design CDA sells.
+A clothing design CDA sells. Its name, description, and image come from Square's catalog.
 _Avoid_: Product, item, design
 
 **Color**:
@@ -38,7 +38,7 @@ _Avoid_: Variant
 A positive whole number of units of one SKU.
 
 **Reservation**:
-Units of a SKU held for an Order when the Buyer places it.
+Units of a SKU held for an Order when the Buyer places it, or when an approved Change request changes its Quantity. The stock check and this write happen together, so a later place or approval sees it.
 _Avoid_: Hold, allocation
 
 **Price**:
@@ -99,7 +99,7 @@ The Buyer collects an Order's clothing from the pickup location.
 _Avoid_: Shipment
 
 **Delivery**:
-A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available. Delivery uses the same statuses as Pickup.
+A way to receive an Order at a Delivery address. The Buyer can choose it only when that address's zip is an open Delivery zip. A closed zip, or a zip that is not on the map, leaves Pickup available. If the Delivery zip set or the open and closed toggles cannot be read, Delivery cannot be chosen and Pickup can still be placed. Delivery uses the same statuses as Pickup.
 _Avoid_: Shipment
 
 **Delivery address**:
