@@ -71,11 +71,11 @@ Whether the whole Order is Confirmed or Unconfirmed. Units on hand covering its 
 _Avoid_: Approval
 
 **Change request**:
-A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed or removed from the set. Staff approve or deny the whole request before the Buyer receives the clothing, and the Order changes only when it is approved. The Buyer may withdraw a waiting request. Withdrawal leaves the Order unchanged. After a request is approved, denied, or withdrawn, the Buyer may submit another until the Change cutoff.
+A Buyer's ask to add or remove SKUs, or to change the Quantities, Pickup time, Delivery time, Delivery address, or Delivery note, on a placed Order. It cannot switch the Order between Pickup and Delivery. Staff approve a move to a different Delivery zip only when that zip is open. A change that keeps the same zip can be approved after that zip is closed or removed from the set. Staff approve or deny the whole request before the Buyer receives the clothing, and the Order changes only when it is approved. The Buyer may withdraw a waiting request, including after the Change cutoff. Withdrawal leaves the Order unchanged. A waiting request blocks Completed. Staff may still move the Order to Reserved and to Prepared. After a request is approved, denied, or withdrawn, the Buyer may submit another until the Change cutoff.
 _Avoid_: Edit
 
 **Change cutoff**:
-The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The same duration applies to every Order.
+The moment, a set duration before Pickup time or Delivery time, after which a Buyer can no longer submit a Change request. The Buyer may still withdraw a request that is already waiting. The same duration applies to every Order.
 
 **Proposed**:
 An Order a Buyer has placed and Staff have not reserved. Staff next move a Confirmed Order to Reserved. An Unconfirmed Order stays Proposed until Staff confirm it.
@@ -119,7 +119,7 @@ One flat amount that may be added to every Delivery Order, fixed when the Order 
 _Avoid_: Rate, shipping fee
 
 **Delivery time**:
-The time a Buyer names for receiving a Delivery Order, in the pickup location's local time. It is on or before the end of that Order's Season. A time already inside the Change cutoff can still be chosen.
+The time a Buyer names for receiving a Delivery Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen.
 _Avoid_: Window
 
 **Pickup location**:
@@ -127,5 +127,5 @@ The one place CDA hands an Order to a Buyer.
 _Avoid_: Store, branch
 
 **Pickup time**:
-The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season. A time already inside the Change cutoff can still be chosen.
+The time a Buyer names for collecting an Order, in the pickup location's local time. It is on or before the end of that Order's Season, and it is not limited to shop hours. A time already inside the Change cutoff can still be chosen.
 _Avoid_: Window
