@@ -1,0 +1,102 @@
+---
+import Steps from "../../../components/Steps.astro"
+import Shell from "../../../layouts/Shell.astro"
+import { loadPage, money, when } from "../../../server/app.ts"
+
+const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+if (!session) return Astro.redirect("/")
+if (session.role !== "staff") return Astro.redirect("/")
+const orderId = Astro.params.id ?? ""
+const result = await ordering.orderFor(session, orderId)
+if (!result.ok) return Astro.redirect("/staff")
+const order = result.value
+const nextLabel = order.actions?.advance === "reserved" ? "Mark Reserved" : order.actions?.advance === "prepared" ? "Mark Prepared" : order.actions?.advance === "completed" ? "Mark Completed" : ""
+const links = [
+  { href: "/staff", label: "Orders", current: true },
+  { href: "/staff/delivery", label: "Delivery zips" },
+  { href: "/keystatic", label: "Ordering copy" },
+]
+---
+
+<Shell title={order.buyerName} account="Staff" links={links}>
+  <div class="order-head">
+    <h1>{order.buyerName}</h1>
+    <p class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</p>
+  </div>
+  <Steps step={order.step} />
+  {error ? <p class="error">{error}</p> : null}
+  <p>{order.seasonName} · {order.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {when(order.scheduledLocal)}</p>
+  {order.address ? <p>{order.address.street}, {order.address.city}, {order.address.state} {order.address.zip} · {order.address.phone}</p> : null}
+  {order.deliveryNote ? <p>{order.deliveryNote}</p> : null}
+  {order.unitsOnHandUnreadable ? <p class="error">Units on hand could not be read.</p> : null}
+  <table>
+    <thead>
+      <tr>
+        <th>SKU</th>
+        <th class="num">Quantity</th>
+        <th class="num">Price</th>
+        <th class="num">Units on hand</th>
+      </tr>
+    </thead>
+    <tbody>
+      {order.lines.map((line) => (
+        <tr>
+          <td>{line.styleName}, {line.color}, size {line.size}<div class="meta">{line.styleDescription}</div></td>
+          <td class="num">{line.quantity}</td>
+          <td class="num">{money(line.priceCents)}</td>
+          <td class="num">{line.unitsOnHand == null ? "—" : line.unitsOnHand}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <div class="totals">
+    <div><span>Goods</span><span>{money(order.goodsCents)}</span></div>
+    {order.deliveryChargeCents != null ? <div><span>Delivery charge</span><span>{money(order.deliveryChargeCents)}</span></div> : null}
+  </div>
+  <p class="lede">Fulfill this sale in Square, then mark it Completed here.</p>
+  <div class="choice">
+    {order.actions?.confirm ? (
+      <form method="post" action="/api/act">
+        <input type="hidden" name="intent" value="confirm" />
+        <input type="hidden" name="orderId" value={order.id} />
+        <button class="primary" type="submit">Confirm</button>
+      </form>
+    ) : null}
+    {nextLabel ? (
+      <form method="post" action="/api/act">
+        <input type="hidden" name="intent" value="advance" />
+        <input type="hidden" name="orderId" value={order.id} />
+        <button class="primary" type="submit">{nextLabel}</button>
+      </form>
+    ) : null}
+    {order.actions?.cancel ? (
+      <form method="post" action="/api/act">
+        <input type="hidden" name="intent" value="cancel" />
+        <input type="hidden" name="orderId" value={order.id} />
+        <button class="quiet" type="submit">Cancel</button>
+      </form>
+    ) : null}
+  </div>
+  {order.waitingChange ? (
+    <section>
+      <h2>Change request</h2>
+      {order.waitingChange.lines.map((line) => (
+        <p>{line.styleName}, {line.color}, size {line.size} × {line.quantity}{line.priceCents == null ? ", price at approval" : ` · ${money(line.priceCents)}`}</p>
+      ))}
+      <p>{when(order.waitingChange.scheduledLocal)}</p>
+      {order.waitingChange.address ? <p>{order.waitingChange.address.street}, {order.waitingChange.address.zip} · {order.waitingChange.address.phone}</p> : null}
+      <div class="choice">
+        <form method="post" action="/api/act">
+          <input type="hidden" name="intent" value="approve" />
+          <input type="hidden" name="orderId" value={order.id} />
+          <button class="primary" type="submit">Approve</button>
+        </form>
+        <form method="post" action="/api/act">
+          <input type="hidden" name="intent" value="deny" />
+          <input type="hidden" name="orderId" value={order.id} />
+          <button class="quiet" type="submit">Deny</button>
+        </form>
+      </div>
+    </section>
+  ) : null}
+</Shell>

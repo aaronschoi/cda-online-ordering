@@ -1,0 +1,73 @@
+---
+import Shell from "../layouts/Shell.astro"
+import { loadPage, money } from "../server/app.ts"
+
+const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+if (!session) return Astro.redirect("/")
+if (session.role !== "buyer") return Astro.redirect("/staff")
+
+const line = await ordering.lineFor(session)
+const links = [
+  { href: "/line", label: "Line", current: true },
+  { href: "/orders", label: "Orders" },
+]
+---
+
+<Shell title="Line" account={session.buyerName ?? session.email} links={links}>
+  <h1>{line.ok ? line.value.seasonName : "Line"}</h1>
+  {error ? <p class="error">{error}</p> : null}
+  {line.ok ? (
+    <form method="post" action="/api/act">
+      <input type="hidden" name="intent" value="place" />
+      {line.value.intro ? <p class="lede">{line.value.intro}</p> : null}
+      {line.value.location ? (
+        <p class="lede">Pickup is at {line.value.location.name}, {line.value.location.address}. Times use {line.value.location.timezone}.</p>
+      ) : (
+        <p class="error">The Pickup location could not be read.</p>
+      )}
+      {line.value.styles.length === 0 ? <p class="empty">No Styles are on the Line.</p> : null}
+      {line.value.styles.map((style) => (
+        <section class="style">
+          <h2>{style.name}</h2>
+          <p>{style.description}</p>
+          {style.skus.map((sku) => (
+            <div class="sku">
+              {sku.pictureUrl ? <img src={sku.pictureUrl} alt="" /> : <span></span>}
+              <div>
+                <div>{sku.color}, size {sku.size}</div>
+                <div class="meta">{money(sku.priceCents)}</div>
+              </div>
+              <label>
+                Quantity
+                <input name={`qty.${sku.skuId}`} type="number" min="0" step="1" inputmode="numeric" value="0" />
+              </label>
+            </div>
+          ))}
+        </section>
+      ))}
+      <div class="place">
+        <div class="choice">
+          <label><input type="radio" name="fulfillment" value="pickup" checked /> Pickup</label>
+          <label><input type="radio" name="fulfillment" value="delivery" /> Delivery{line.value.deliveryChargeCents ? `, ${money(line.value.deliveryChargeCents)}` : ""}</label>
+        </div>
+        <label>
+          Time
+          <input name="scheduledLocal" type="datetime-local" required />
+        </label>
+        <fieldset>
+          <label>Street <input name="street" autocomplete="street-address" /></label>
+          <div class="address">
+            <label>City <input name="city" autocomplete="address-level2" /></label>
+            <label>State <input name="state" autocomplete="address-level1" /></label>
+            <label>Zip <input name="zip" autocomplete="postal-code" /></label>
+            <label>Phone <input name="phone" autocomplete="tel" /></label>
+          </div>
+          <label>Delivery note <textarea name="deliveryNote" rows="2"></textarea></label>
+        </fieldset>
+        <button class="primary" type="submit">Place Order</button>
+      </div>
+    </form>
+  ) : (
+    <p class="lede">{line.error === "no-season" ? "No Season is open." : "The Line could not be read."}</p>
+  )}
+</Shell>
