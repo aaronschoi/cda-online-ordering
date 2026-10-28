@@ -168,11 +168,37 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .totals { margin: 12px 0 24px; }
 .totals div { display: flex; justify-content: space-between; max-width: 320px; padding: 4px 0; }
 
-.map { width: 100%; height: auto; background: var(--paper); border: 1px solid var(--rule); }
-.map .open { fill: color-mix(in srgb, var(--open) 22%, white); stroke: var(--open); }
-.map .closed { fill: var(--ground); stroke: var(--rule); }
-.map text { font-size: 13px; fill: var(--ink); }
-.zips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.delivery-map {
+  height: 560px;
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+.delivery-map .leaflet-interactive { cursor: default; }
+.delivery-map.acting .leaflet-interactive { cursor: pointer; }
+.leaflet-container { font-family: inherit; background: var(--paper); }
+.leaflet-tooltip.zip-label {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 0;
+}
+.leaflet-tooltip.zip-label::before { display: none; }
+.leaflet-tooltip.zip-label .zip-code {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+.leaflet-control-attribution {
+  font-size: 11px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
 .sign { display: grid; gap: 28px; max-width: 420px; }
 .pin-bar {
   display: flex;

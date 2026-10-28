@@ -123,7 +123,7 @@ Optional text a Buyer may add to a Delivery Order about receiving it. It may be 
 _Avoid_: Instructions, comment
 
 **Delivery zip**:
-The five-digit code Staff can open or close for Delivery. The map shows one only when Keystatic has its code and name and the repo has its shape. Staff do not add a zip from the map. Closing a zip, or removing it from that set, leaves Orders already placed for it on Delivery. A removed zip cannot be chosen for a new Order or for a move.
+The five-digit code Staff can open or close for Delivery by selecting its shape on the map. The map shows that shape only when Keystatic has its code and name and the repo has its shape. The shape shows the name, the code, and whether the Delivery zip is open or closed. A PIN must be acting to select it. Otherwise the shape is shown, and selecting it does not open or close the Delivery zip or ask for a PIN. Staff do not add a zip from the map. Closing a zip, or removing it from that set, leaves Orders already placed for it on Delivery. A removed zip cannot be chosen for a new Order or for a move.
 _Avoid_: Zone
 
 **Delivery charge**:

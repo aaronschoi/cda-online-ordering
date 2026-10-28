@@ -1,0 +1,51 @@
+---
+import { fill } from "../domain/language.ts"
+
+interface Shape {
+  code: string
+  name: string
+  open: boolean
+  rings: number[][][]
+}
+
+interface Props {
+  shapes: Shape[]
+  acting: boolean
+  mapLabel: string
+  openLabel: string
+  closeLabel: string
+  isOpen: string
+  isClosed: string
+}
+
+const { shapes, acting, mapLabel, openLabel, closeLabel, isOpen, isClosed } = Astro.props
+const payload = {
+  acting,
+  shapes: shapes.map((shape) => ({
+    ...shape,
+    label: fill(shape.open ? (acting ? closeLabel : isOpen) : acting ? openLabel : isClosed, {
+      name: shape.name,
+      code: shape.code,
+    }),
+  })),
+}
+const data = JSON.stringify(payload).replaceAll("<", "\\u003c")
+---
+
+<div class="delivery-map-block">
+  <div class="delivery-map" role="group" aria-label={mapLabel} data-delivery-map></div>
+  <script type="application/json" data-delivery-map-data set:html={data} />
+  {acting
+    ? shapes.map((shape) => (
+        <form method="post" action="/api/act" data-code={shape.code}>
+          <input type="hidden" name="intent" value="zip" />
+          <input type="hidden" name="code" value={shape.code} />
+          <input type="hidden" name="open" value={shape.open ? "0" : "1"} />
+        </form>
+      ))
+    : null}
+</div>
+<script>
+  import { mountDeliveryMap } from "./delivery-map-client.ts"
+  mountDeliveryMap()
+</script>
