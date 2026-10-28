@@ -11,9 +11,10 @@ interface Props {
   title: string
   links?: Link[]
   account?: string
+  signOut?: boolean
 }
 
-const { title, links = [], account } = Astro.props
+const { title, links = [], account, signOut = true } = Astro.props
 ---
 
 <html lang="en">
@@ -40,7 +41,7 @@ const { title, links = [], account } = Astro.props
           {links.map((link) => (
             <a href={link.href} aria-current={link.current ? "page" : undefined}>{link.label}</a>
           ))}
-          {account ? (
+          {account && signOut ? (
             <form method="post" action="/api/act">
               <input type="hidden" name="intent" value="sign-out" />
               <button type="submit">Sign out</button>

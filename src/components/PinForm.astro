@@ -1,0 +1,28 @@
+---
+interface Props {
+  acting: { name: string } | null
+  returnPath: string
+  ask?: boolean
+}
+
+const { acting, returnPath, ask = true } = Astro.props
+---
+
+{acting ? (
+  <form class="pin-bar" method="post" action="/api/act">
+    <input type="hidden" name="intent" value="clear-pin" />
+    <input type="hidden" name="return" value={returnPath} />
+    <p>{acting.name} is acting.</p>
+    <button class="quiet" type="submit">Clear PIN</button>
+  </form>
+) : ask ? (
+  <form class="pin-bar" method="post" action="/api/act">
+    <input type="hidden" name="intent" value="enter-pin" />
+    <input type="hidden" name="return" value={returnPath} />
+    <label>
+      PIN
+      <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
+    </label>
+    <button class="primary" type="submit">Use PIN</button>
+  </form>
+) : null}

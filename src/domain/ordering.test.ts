@@ -9,8 +9,7 @@ import { schemaSql } from "../adapters/schema.ts"
 import { fixtureContentBase, fixtureCustomers, fixtureOnHand, fixtureStyles } from "./fixture.ts"
 import { createMemoryRepo } from "./memory-repo.ts"
 import { createOrdering, type Ordering } from "./ordering.ts"
-import { createPasswords } from "./passwords.ts"
-import type { ContentData, ContentPort, PlaceInput, Session, SquarePort, Style, ZipShape } from "./types.ts"
+import type { Acting, ContentData, ContentPort, PlaceInput, Session, SquarePort, Style, ZipShape } from "./types.ts"
 
 const shapes: ZipShape[] = geo.features.flatMap((feature) => {
   if (feature.geometry.type !== "Polygon") return []
@@ -124,14 +123,15 @@ function outbox() {
   }
 }
 
-async function world() {
+async function world(seedStaff = true) {
   let now = new Date("2026-10-27T18:00:00.000Z")
   const repo = createMemoryRepo({
     togglesUnreadable: () => togglesUnreadable,
   })
   let togglesUnreadable = false
-  const passwords = createPasswords()
-  await repo.insertStaff("staff@cda.example", await passwords.hash("cda-staff"))
+  if (seedStaff) {
+    await repo.insertStaff({ id: "staff-1", name: "Sam", email: "staff@cda.example", pin: "1234" })
+  }
   const mail = outbox()
   const square = mutableSquare()
   const content = mutableContent(contentData())
@@ -141,7 +141,6 @@ async function world() {
     square: square.port,
     content: content.port,
     mailer: mail.mailer,
-    passwords,
     ids: { next: () => `id-${++n}` },
     now: () => now,
   })
@@ -169,8 +168,8 @@ async function asBuyer(app: World, email = "buyer@atelier.example"): Promise<Ses
   return signed.value
 }
 
-async function asStaff(app: World): Promise<Session> {
-  const signed = await app.ordering.signInStaff("staff@cda.example", "cda-staff")
+async function asStaff(app: World): Promise<Acting> {
+  const signed = await app.ordering.enterPin("1234")
   if (!signed.ok) throw new Error(signed.error)
   return signed.value
 }
@@ -208,11 +207,13 @@ describe("ordering", () => {
     expect(file.trim()).toBe(schemaSql.trim())
   })
 
-  it("refuses sign-in when the email is Staff and a Buyer", async () => {
+  it("refuses a Buyer code for a Manager email, and refuses both when that email is also a Buyer", async () => {
     const app = await world()
+    expect(await app.ordering.requestBuyerCode("staff@cda.example")).toEqual({ ok: false, error: "refused" })
+    expect((await app.ordering.admit("staff@cda.example")).ok).toBe(true)
     app.square.customers.push({ id: "cust_staff", email: "staff@cda.example", name: "Staff Buyer" })
     expect(await app.ordering.requestBuyerCode("staff@cda.example")).toEqual({ ok: false, error: "refused" })
-    expect(await app.ordering.signInStaff("staff@cda.example", "cda-staff")).toEqual({ ok: false, error: "refused" })
+    expect(await app.ordering.admit("staff@cda.example")).toEqual({ ok: false, error: "refused" })
   })
 
   it("sends a sign-in code only for a Square Customer and does not return the code", async () => {
@@ -776,6 +777,123 @@ describe("ordering", () => {
     expect(approved.value.confirmation).toBe("confirmed")
     expect(approved.value.scheduledLocal).toBe("2026-11-12T11:00")
     expect(approved.value.lines[0]?.quantity).toBe(1)
+  })
+
+  it("lets a wrong PIN change nothing, then a real PIN name who is acting", async () => {
+    const app = await world()
+    expect(await app.ordering.enterPin("0000")).toEqual({ ok: false, error: "refused" })
+    expect(await app.ordering.enterPin("12")).toEqual({ ok: false, error: "refused" })
+    const acting = await app.ordering.enterPin("1234")
+    expect(acting).toEqual({ ok: true, value: { role: "acting", staffId: "staff-1", name: "Sam" } })
+    const open = await app.ordering.admit("staff@cda.example")
+    if (!open.ok) throw new Error(open.error)
+    const buyer = await asBuyer(app)
+    const order = await placed(app.ordering, buyer)
+    const listed = await app.ordering.ordersFor(open.value)
+    if (!listed.ok) throw new Error(listed.error)
+    expect(listed.value.map((row) => row.id)).toEqual([order.id])
+    expect(listed.value[0]?.actions).toBeUndefined()
+    expect(listed.value[0]?.lines[0]?.unitsOnHand).toBeTypeOf("number")
+    expect(await app.ordering.confirmOrder(open.value, order.id)).toEqual({ ok: false, error: "forbidden" })
+  })
+
+  it("writes the Staff log in pickup-location local time and leaves it when the name changes", async () => {
+    const app = await world()
+    const buyer = await asBuyer(app)
+    const staff = await asStaff(app)
+    const order = await placed(app.ordering, buyer, pickup("jacket-indigo-1", 5))
+    expect(order.confirmation).toBe("unconfirmed")
+    app.square.fail.location = true
+    expect(await app.ordering.confirmOrder(staff, order.id)).toEqual({ ok: false, error: "unreadable" })
+    expect(await app.ordering.staffRecord("staff@cda.example")).toEqual({ ok: true, value: [] })
+    const still = await app.ordering.orderFor(staff, order.id)
+    if (!still.ok) throw new Error(still.error)
+    expect(still.value.confirmation).toBe("unconfirmed")
+    app.square.fail.location = false
+    const confirmed = await app.ordering.confirmOrder(staff, order.id)
+    if (!confirmed.ok) throw new Error(confirmed.error)
+    const saved = await app.ordering.saveStaff("staff@cda.example", { id: staff.staffId, name: "Samuel", pin: "1234" })
+    if (!saved.ok) throw new Error(saved.error)
+    expect(saved.value.find((member) => member.id === staff.staffId)?.email).toBe("staff@cda.example")
+    expect(await app.ordering.actingFor("1234")).toEqual({ role: "acting", staffId: staff.staffId, name: "Samuel" })
+    const log = await app.ordering.staffRecord("staff@cda.example")
+    if (!log.ok) throw new Error(log.error)
+    expect(log.value).toEqual([
+      {
+        id: expect.any(String),
+        staffName: "Sam",
+        action: "Confirmed",
+        orderId: order.id,
+        zip: null,
+        actedLocal: "2026-10-27T11:00",
+      },
+    ])
+  })
+
+  it("logs a Delivery zip by the zip, and stops acting when that PIN changes", async () => {
+    const app = await world()
+    const staff = await asStaff(app)
+    const opened = await app.ordering.setDeliveryZip(staff, "90026", true)
+    if (!opened.ok) throw new Error(opened.error)
+    const changed = await app.ordering.saveStaff("staff@cda.example", { id: staff.staffId, name: "Sam", pin: "4321" })
+    if (!changed.ok) throw new Error(changed.error)
+    expect(await app.ordering.actingFor("1234")).toBeNull()
+    expect((await app.ordering.actingFor("4321"))?.name).toBe("Sam")
+    const log = await app.ordering.staffRecord("staff@cda.example")
+    if (!log.ok) throw new Error(log.error)
+    expect(log.value[0]).toMatchObject({ action: "Opened 90026", orderId: null, zip: "90026", staffName: "Sam" })
+  })
+
+  it("keeps names and PINs unique, and keeps the last Manager", async () => {
+    const app = await world()
+    expect(await app.ordering.saveStaff("staff@cda.example", { name: "Sam", pin: "9999" })).toEqual({
+      ok: false,
+      error: "taken",
+    })
+    expect(await app.ordering.saveStaff("staff@cda.example", { name: "Alex", pin: "1234" })).toEqual({
+      ok: false,
+      error: "taken",
+    })
+    expect(await app.ordering.addManager("staff@cda.example", { name: "Pat", pin: "5678", email: "buyer@atelier.example" })).toEqual({
+      ok: false,
+      error: "refused",
+    })
+    const added = await app.ordering.addManager("staff@cda.example", {
+      name: "Pat",
+      pin: "5678",
+      email: "pat@cda.example",
+    })
+    if (!added.ok) throw new Error(added.error)
+    const pat = added.value.find((member) => member.email === "pat@cda.example")
+    const sam = added.value.find((member) => member.email === "staff@cda.example")
+    if (!pat || !sam) throw new Error("missing staff")
+    const demoted = await app.ordering.clearManagerEmail("staff@cda.example", pat.id)
+    if (!demoted.ok) throw new Error(demoted.error)
+    expect(demoted.value.find((member) => member.id === pat.id)).toMatchObject({ email: null, name: "Pat", pin: "5678" })
+    expect(await app.ordering.clearManagerEmail("staff@cda.example", sam.id)).toEqual({ ok: false, error: "last-manager" })
+    expect(await app.ordering.removeStaff("staff@cda.example", sam.id)).toEqual({ ok: false, error: "last-manager" })
+    const removed = await app.ordering.removeStaff("staff@cda.example", pat.id)
+    if (!removed.ok) throw new Error(removed.error)
+    expect(removed.value.some((member) => member.id === pat.id)).toBe(false)
+    expect(await app.ordering.enterPin("5678")).toEqual({ ok: false, error: "refused" })
+  })
+
+  it("creates the first Manager only when none exist, and that PIN waits for a name", async () => {
+    const app = await world(false)
+    expect(await app.ordering.ensureFirstManager("buyer@atelier.example")).toEqual({ ok: false, error: "refused" })
+    const created = await app.ordering.ensureFirstManager("boss@cda.example")
+    expect(created).toEqual({ ok: true, value: { created: true } })
+    expect(await app.ordering.ensureFirstManager("other@cda.example")).toEqual({ ok: true, value: { created: false } })
+    expect(await app.ordering.enterPin("1111")).toEqual({ ok: false, error: "refused" })
+    const directory = await app.ordering.staffDirectory("boss@cda.example")
+    if (!directory.ok) throw new Error(directory.error)
+    const boss = directory.value[0]
+    if (!boss) throw new Error("missing manager")
+    expect(boss).toMatchObject({ name: "", email: "boss@cda.example", pin: null })
+    const named = await app.ordering.saveStaff("boss@cda.example", { id: boss.id, name: "Bo", pin: "1111" })
+    if (!named.ok) throw new Error(named.error)
+    expect((await app.ordering.enterPin("1111")).ok).toBe(true)
+    expect(await app.ordering.admit("buyer@atelier.example")).toEqual({ ok: false, error: "forbidden" })
   })
 
   it("refuses a time after the Season ends", async () => {

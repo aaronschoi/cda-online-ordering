@@ -1,25 +1,22 @@
 ---
+import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
 import { drawZips } from "../../domain/map-draw.ts"
-import { loadPage } from "../../server/app.ts"
+import { loadPage, staffLinks } from "../../server/app.ts"
 
-const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
-if (!session) return Astro.redirect("/")
-if (session.role !== "staff") return Astro.redirect("/orders")
-const map = await ordering.deliveryMap(session)
+const { ordering, open, acting, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+if (!open) return Astro.redirect("/")
+const map = await ordering.deliveryMap(acting ?? open)
 const drawn = map.ok ? drawZips(map.value) : []
 const byCode = new Map(drawn.map((shape) => [shape.code, shape]))
-const links = [
-  { href: "/staff", label: "Orders" },
-  { href: "/staff/delivery", label: "Delivery zips", current: true },
-  { href: "/keystatic", label: "Ordering copy" },
-]
+const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN does not name a Staff member." : error
 ---
 
-<Shell title="Delivery zips" account="Staff" links={links}>
+<Shell title="Delivery zips" account={acting?.name ?? "Staff"} links={staffLinks("zips")} signOut={false}>
   <h1>Delivery zips</h1>
   <p class="lede">A zip is shown when it has a name and a shape. Open it to allow Delivery. Closing it leaves Orders already placed for that zip on Delivery.</p>
-  {error ? <p class="error">{error}</p> : null}
+  <PinForm acting={acting} returnPath="/staff/delivery" />
+  {pinError ? <p class="error">{pinError}</p> : null}
   {map.ok ? (
     <>
       <svg class="map" viewBox="0 0 640 420" role="img" aria-label="Delivery zips">
@@ -36,12 +33,16 @@ const links = [
       </svg>
       <div class="zips">
         {map.value.map((zip) => (
-          <form method="post" action="/api/act">
-            <input type="hidden" name="intent" value="zip" />
-            <input type="hidden" name="code" value={zip.code} />
-            <input type="hidden" name="open" value={zip.open ? "0" : "1"} />
-            <button class={zip.open ? "primary" : "quiet"} type="submit">{zip.open ? "Close" : "Open"} {zip.name}</button>
-          </form>
+          acting ? (
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="zip" />
+              <input type="hidden" name="code" value={zip.code} />
+              <input type="hidden" name="open" value={zip.open ? "0" : "1"} />
+              <button class={zip.open ? "primary" : "quiet"} type="submit">{zip.open ? "Close" : "Open"} {zip.name}</button>
+            </form>
+          ) : (
+            <p>{zip.name} is {zip.open ? "open" : "closed"}.</p>
+          )
         ))}
       </div>
     </>
