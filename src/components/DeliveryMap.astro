@@ -1,18 +1,11 @@
 ---
 import { fill } from "../domain/language.ts"
-import { mapSize } from "../domain/map-draw.ts"
 
 interface Shape {
   code: string
   name: string
   open: boolean
-  d: string
-  x: number
-  y: number
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
+  rings: number[][][]
 }
 
 interface Props {
@@ -26,47 +19,33 @@ interface Props {
 }
 
 const { shapes, acting, mapLabel, openLabel, closeLabel, isOpen, isClosed } = Astro.props
-
-function place(shape: Shape) {
-  const left = (shape.minX / mapSize.width) * 100
-  const top = (shape.minY / mapSize.height) * 100
-  const width = ((shape.maxX - shape.minX) / mapSize.width) * 100
-  const height = ((shape.maxY - shape.minY) / mapSize.height) * 100
-  return `left:${left}%;top:${top}%;width:${width}%;height:${height}%`
-}
----
-
-<div class="map-stage" role="group" aria-label={mapLabel}>
-  <svg class="map" viewBox={`0 0 ${mapSize.width} ${mapSize.height}`} aria-hidden="true"></svg>
-  {shapes.map((shape) => {
-    const spoken = fill(shape.open ? (acting ? closeLabel : isOpen) : acting ? openLabel : isClosed, {
+const payload = {
+  acting,
+  shapes: shapes.map((shape) => ({
+    ...shape,
+    label: fill(shape.open ? (acting ? closeLabel : isOpen) : acting ? openLabel : isClosed, {
       name: shape.name,
       code: shape.code,
-    })
-    const drawing = (
-      <svg
-        class="map-layer"
-        viewBox={`${shape.minX} ${shape.minY} ${shape.maxX - shape.minX} ${shape.maxY - shape.minY}`}
-        aria-hidden="true"
-      >
-        <path class={shape.open ? "open" : "closed"} d={shape.d} />
-        <text x={shape.x} y={shape.y - 8} text-anchor="middle">{shape.name}</text>
-        <text class="code" x={shape.x} y={shape.y + 12} text-anchor="middle">{shape.code}</text>
-      </svg>
-    )
-    return acting ? (
-      <form method="post" action="/api/act">
-        <input type="hidden" name="intent" value="zip" />
-        <input type="hidden" name="code" value={shape.code} />
-        <input type="hidden" name="open" value={shape.open ? "0" : "1"} />
-        <button class="zip-shape" type="submit" style={place(shape)} aria-label={spoken}>
-          {drawing}
-        </button>
-      </form>
-    ) : (
-      <div class="zip-shape" style={place(shape)} role="img" aria-label={spoken}>
-        {drawing}
-      </div>
-    )
-  })}
+    }),
+  })),
+}
+const data = JSON.stringify(payload).replaceAll("<", "\\u003c")
+---
+
+<div class="delivery-map-block">
+  <div class="delivery-map" role="group" aria-label={mapLabel} data-delivery-map></div>
+  <script type="application/json" data-delivery-map-data set:html={data} />
+  {acting
+    ? shapes.map((shape) => (
+        <form method="post" action="/api/act" data-code={shape.code}>
+          <input type="hidden" name="intent" value="zip" />
+          <input type="hidden" name="code" value={shape.code} />
+          <input type="hidden" name="open" value={shape.open ? "0" : "1"} />
+        </form>
+      ))
+    : null}
 </div>
+<script>
+  import { mountDeliveryMap } from "./delivery-map-client.ts"
+  mountDeliveryMap()
+</script>

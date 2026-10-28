@@ -2,7 +2,6 @@
 import DeliveryMap from "../../components/DeliveryMap.astro"
 import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
-import { drawZips } from "../../domain/map-draw.ts"
 import { loadPage, staffLinks } from "../../server/app.ts"
 
 const { ordering, open, acting, error, language, copy } = await loadPage(
@@ -13,14 +12,8 @@ const { ordering, open, acting, error, language, copy } = await loadPage(
 )
 if (!open) return Astro.redirect("/")
 const map = await ordering.deliveryMap(acting ?? open)
-const drawn = map.ok ? drawZips(map.value) : []
-const byCode = new Map(drawn.map((shape) => [shape.code, shape]))
 const shapes = map.ok
-  ? map.value.flatMap((zip) => {
-      const shape = byCode.get(zip.code)
-      if (!shape?.d || shape.maxX <= shape.minX || shape.maxY <= shape.minY) return []
-      return [{ ...shape, name: zip.name, open: zip.open }]
-    })
+  ? map.value.flatMap((zip) => (zip.rings[0] && zip.rings[0].length >= 4 ? [zip] : []))
   : []
 const pinError = Astro.url.searchParams.get("error") === "refused" ? copy.pin.missed : error
 ---

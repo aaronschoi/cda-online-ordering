@@ -168,27 +168,37 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .totals { margin: 12px 0 24px; }
 .totals div { display: flex; justify-content: space-between; max-width: 320px; padding: 4px 0; }
 
-.map-stage { position: relative; }
-.map-stage > .map { width: 100%; height: auto; display: block; background: var(--paper); border: 1px solid var(--rule); }
-.map-stage form { display: contents; }
-.map-stage .zip-shape {
-  position: absolute;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  overflow: visible;
+.delivery-map {
+  height: 560px;
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--rule);
 }
-.map-stage button.zip-shape { cursor: pointer; }
-.map-stage .map-layer { width: 100%; height: 100%; display: block; overflow: visible; background: none; border: 0; }
-.map-stage .open { fill: color-mix(in srgb, var(--open) 22%, white); stroke: var(--open); }
-.map-stage .closed { fill: var(--ground); stroke: var(--rule); }
-.map-stage button.zip-shape:hover .open,
-.map-stage button.zip-shape:focus-visible .open { fill: color-mix(in srgb, var(--open) 40%, white); }
-.map-stage button.zip-shape:hover .closed,
-.map-stage button.zip-shape:focus-visible .closed { fill: color-mix(in srgb, var(--ink) 8%, var(--ground)); }
-.map-stage text { font-size: 13px; fill: var(--ink); }
-.map-stage text.code { font-size: 12px; fill: var(--muted); }
+.delivery-map .leaflet-interactive { cursor: default; }
+.delivery-map.acting .leaflet-interactive { cursor: pointer; }
+.leaflet-container { font-family: inherit; background: var(--paper); }
+.leaflet-tooltip.zip-label {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 0;
+}
+.leaflet-tooltip.zip-label::before { display: none; }
+.leaflet-tooltip.zip-label .zip-code {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+.leaflet-control-attribution {
+  font-size: 11px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
 .sign { display: grid; gap: 28px; max-width: 420px; }
 .pin-bar {
   display: flex;

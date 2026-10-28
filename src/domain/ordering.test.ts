@@ -640,6 +640,7 @@ describe("ordering", () => {
     expect(codes).toContain("90026")
     expect(codes).not.toContain("90210")
     expect(codes).not.toContain("90012")
+    expect(map.value.find((zip) => zip.code === "90026")?.rings[0]?.length).toBeGreaterThan(20)
     expect(await app.ordering.setDeliveryZip(staff, "90210", true)).toEqual({ ok: false, error: "not-on-map" })
     const opened = await app.ordering.setDeliveryZip(staff, "90026", true)
     if (!opened.ok) throw new Error(opened.error)
