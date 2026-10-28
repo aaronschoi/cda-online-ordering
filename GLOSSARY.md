@@ -15,7 +15,7 @@ _Avoid_: Customer, client, retailer
 
 **Staff**:
 A person at CDA who reviews Orders. Staff see every Order and the units on hand. A Staff email is not a Square Customer email.
-_Avoid_: Worker, employee
+_Avoid_: Manager, worker, employee
 
 ### Goods
 
