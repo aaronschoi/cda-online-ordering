@@ -1,7 +1,9 @@
+export const mapSize = { width: 640, height: 420 }
+
 export function drawZips(
   zips: { code: string; rings: number[][][] }[],
-  width = 640,
-  height = 420,
+  width = mapSize.width,
+  height = mapSize.height,
   pad = 28,
 ) {
   const points = zips.flatMap((zip) => zip.rings.flat())
@@ -29,8 +31,33 @@ export function drawZips(
   return zips.map((zip) => {
     const ring = zip.rings[0] ?? []
     const pts = ring.flatMap(([lon, lat]) => (lon == null || lat == null ? [] : [project(lon, lat)]))
+    if (pts.length === 0) return { code: zip.code, d: "", x: 0, y: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 }
     const d = pts.map((point, index) => `${index === 0 ? "M" : "L"}${point[0]} ${point[1]}`).join(" ") + " Z"
-    const [x, y] = pts.reduce((sum, point) => [sum[0]! + point[0]!, sum[1]! + point[1]!], [0, 0])
-    return { code: zip.code, d, x: Math.round((x / pts.length) * 10) / 10, y: Math.round((y / pts.length) * 10) / 10 }
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    let sumX = 0
+    let sumY = 0
+    for (const point of pts) {
+      const px = point[0]!
+      const py = point[1]!
+      minX = Math.min(minX, px)
+      maxX = Math.max(maxX, px)
+      minY = Math.min(minY, py)
+      maxY = Math.max(maxY, py)
+      sumX += px
+      sumY += py
+    }
+    return {
+      code: zip.code,
+      d,
+      x: Math.round((sumX / pts.length) * 10) / 10,
+      y: Math.round((sumY / pts.length) * 10) / 10,
+      minX,
+      minY,
+      maxX,
+      maxY,
+    }
   })
 }

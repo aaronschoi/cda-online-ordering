@@ -80,6 +80,13 @@ describe("site language", () => {
     expect(phrases("ko").failures.taken).toBe("그 이름, PIN 또는 이메일은 이미 사용 중입니다.")
   })
 
+  it("names a Delivery zip by its neighborhood and code", () => {
+    const values = { name: "Echo Park", code: "90026" }
+    expect(fill(phrases("en").deliveryMap.open, values)).toBe("Open Echo Park, 90026")
+    expect(fill(phrases("es").deliveryMap.close, values)).toBe("Cerrar Echo Park, 90026")
+    expect(fill(phrases("ko").deliveryMap.isClosed, values)).toBe("Echo Park, 90026 닫혀 있음.")
+  })
+
   it("explains a refused Buyer in the chosen language", () => {
     expect(phrases("en").failures["no-buyer"]).toBe("CDA has no Buyer for that email.")
     expect(phrases("es").failures["no-buyer"]).toBe("CDA no tiene un comprador con ese correo.")
