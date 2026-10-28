@@ -1,6 +1,6 @@
 # The first Manager's email is configured
 
-CDA names the first Manager's email before anyone opens the pages. That Manager sets their name and four-digit PIN in the manager section. Moving between the staff pages and the manager section leaves the same Staff member acting. Leaving those pages, or Access ending, clears the PIN. When the pickup location cannot be read, a staff action is not done and the Staff log gets no entry.
+CDA names the first Manager's email before anyone opens the pages. That Manager sets their name and four-digit PIN in the manager section. Moving between the staff pages and the manager section leaves the same Staff member acting. Leaving those pages, or Access ending, clears the PIN. When the pickup location cannot be read, a staff action is not done and the Staff log gets no entry. Once this Manager exists, ADR 0030 decides who can open the pages.
 
 ## Considered options
 

@@ -18,11 +18,11 @@ A person at CDA who reviews Orders. Staff see every Order and the units on hand.
 _Avoid_: Worker, employee
 
 **Manager**:
-A Staff member with an email that is not a Buyer's Square Customer email. A Buyer code to that email is refused. There is always at least one Manager. The first Manager's email is named before the pages open, and that Manager sets their name and PIN afterward. A Manager maintains the Staff list, sees every PIN and the Staff log, and edits the Season, the Line, the Change cutoff, the Delivery charge, Buyer copy, and Delivery zip names. A PIN is not required for that work. Other Staff members cannot.
+A Staff member with an email that is not a Buyer's Square Customer email. A Buyer code to that email is refused. There is always at least one Manager. The first Manager's email is named before the pages open, and that Manager sets their name and PIN afterward. Once a Manager exists, the Staff list is who may open the pages. A Manager maintains the Staff list, sees every PIN and the Staff log, and edits the Season, the Line, the Change cutoff, the Delivery charge, Buyer copy, and Delivery zip names. A PIN is not required for that work. Other Staff members cannot.
 _Avoid_: Admin, owner
 
 **PIN**:
-A Staff member's four-digit secret for acting on an Order. It belongs to one Staff member, a Manager can read it, and no two Staff members share one. It remains who is acting until a different PIN replaces it, the Staff member clears it, the staff pages and the manager section are left, or a Manager changes or removes it.
+A Staff member's four-digit secret for acting on an Order. It belongs to one Staff member, a Manager can read it, and no two Staff members share one. It remains who is acting until a different PIN replaces it, the Staff member clears it, the staff pages and the manager section are left, or a Manager changes or removes it. A PIN that belongs to nobody leaves who is acting unchanged.
 _Avoid_: Password, code
 
 ### Goods
