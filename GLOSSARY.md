@@ -14,15 +14,15 @@ A business that purchases CDA's clothing for resale. After signing in, a Buyer s
 _Avoid_: Customer, client, retailer
 
 **Staff**:
-A person at CDA who reviews Orders. Staff see every Order and the units on hand. A Staff email is not a Square Customer email.
+A person at CDA who reviews Orders. Staff see every Order and the units on hand. A Staff member who is not a Manager has a name and a PIN and no email.
 _Avoid_: Worker, employee
 
 **Manager**:
-A Staff member who can see every PIN and the Staff log. Other Staff members cannot. A Manager still sees every Order.
+A Staff member with an email that is not a Buyer's Square Customer email. A Manager maintains the Staff list, sees every PIN and the Staff log, and edits the Season, the Line, the Change cutoff, the Delivery charge, Buyer copy, and Delivery zip names. Other Staff members cannot.
 _Avoid_: Admin, owner
 
 **PIN**:
-A Staff member's secret for acting on an Order. It belongs to one Staff member. A Manager can read it.
+A Staff member's secret for acting on an Order. It belongs to one Staff member, and a Manager can read it. It remains who is acting until a different PIN replaces it. Leaving the staff pages clears it.
 _Avoid_: Password, code
 
 ### Goods
