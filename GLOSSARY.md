@@ -10,7 +10,7 @@ CDA sells clothing wholesale. Buyers place Orders for Pickup or Delivery.
 The business that sells clothing wholesale.
 
 **Buyer**:
-A business that purchases CDA's clothing for resale. After signing in, a Buyer sees the open Line and only that Buyer's Orders, including Completed and Canceled. A signed-out visitor sees neither Styles, prices, nor Orders. The Buyer's email is that Square Customer email and is not a Staff login.
+A business that purchases CDA's clothing for resale. After signing in, a Buyer sees the open Line and only that Buyer's Orders, including Completed and Canceled. A signed-out visitor sees neither Styles, prices, nor Orders. The Buyer's email is that Square Customer email and is not a Manager's email.
 _Avoid_: Customer, client, retailer
 
 **Staff**:
@@ -18,11 +18,11 @@ A person at CDA who reviews Orders. Staff see every Order and the units on hand.
 _Avoid_: Worker, employee
 
 **Manager**:
-A Staff member with an email that is not a Buyer's Square Customer email. A Manager maintains the Staff list, sees every PIN and the Staff log, and edits the Season, the Line, the Change cutoff, the Delivery charge, Buyer copy, and Delivery zip names. Other Staff members cannot.
+A Staff member with an email that is not a Buyer's Square Customer email. A Buyer code to that email is refused. There is always at least one Manager. A Manager maintains the Staff list, sees every PIN and the Staff log, and edits the Season, the Line, the Change cutoff, the Delivery charge, Buyer copy, and Delivery zip names. Other Staff members cannot.
 _Avoid_: Admin, owner
 
 **PIN**:
-A Staff member's secret for acting on an Order. It belongs to one Staff member, and a Manager can read it. It remains who is acting until a different PIN replaces it. Leaving the staff pages clears it.
+A Staff member's secret for acting on an Order. It belongs to one Staff member, a Manager can read it, and no two Staff members share one. It remains who is acting until a different PIN replaces it, the staff pages are left, or a Manager changes or removes it.
 _Avoid_: Password, code
 
 ### Goods
@@ -67,7 +67,7 @@ _Avoid_: Drop
 A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it, for the Season open then, with at least one SKU. If no Season is open, the Buyer cannot place one. Placing needs a Square price for every SKU, a reading of the units on hand, and the Delivery charge setting. If any of those cannot be read, nothing is stored.
 
 **Staff log**:
-The record of a staff action. It names the Staff member, the action, and the Order. It does not assign the Order to that Staff member.
+The record of a staff action. It names the Staff member, the action, and either the Order or the Delivery zip. It does not assign the Order to that Staff member, and a later change leaves the entry as written.
 _Avoid_: Audit trail, history
 
 **Confirmed**:
