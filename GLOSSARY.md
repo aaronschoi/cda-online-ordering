@@ -15,7 +15,15 @@ _Avoid_: Customer, client, retailer
 
 **Staff**:
 A person at CDA who reviews Orders. Staff see every Order and the units on hand. A Staff email is not a Square Customer email.
-_Avoid_: Manager, worker, employee
+_Avoid_: Worker, employee
+
+**Manager**:
+A Staff member who can see every PIN and the Staff log. Other Staff members cannot. A Manager still sees every Order.
+_Avoid_: Admin, owner
+
+**PIN**:
+A Staff member's secret for acting on an Order. It belongs to one Staff member. A Manager can read it.
+_Avoid_: Password, code
 
 ### Goods
 
@@ -57,6 +65,10 @@ _Avoid_: Drop
 
 **Order**:
 A Buyer's request for clothing from CDA, for Pickup or for Delivery, not both. It exists when the Buyer places it, for the Season open then, with at least one SKU. If no Season is open, the Buyer cannot place one. Placing needs a Square price for every SKU, a reading of the units on hand, and the Delivery charge setting. If any of those cannot be read, nothing is stored.
+
+**Staff log**:
+The record of a staff action. It names the Staff member, the action, and the Order. It does not assign the Order to that Staff member.
+_Avoid_: Audit trail, history
 
 **Confirmed**:
 An Order that will be filled.

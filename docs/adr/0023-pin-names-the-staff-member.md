@@ -6,4 +6,4 @@ Cloudflare Access opens the staff pages. The person who opens them is Staff. A P
 
 - A password for this app, stored for each Staff member. Rejected.
 - Cloudflare Access as the only Staff sign-in, with no PIN. Rejected. A shared computer needs a way to say which Staff member is there.
-- A separate Manager party who opens the pages. Rejected. That person is Staff.
+- A separate party, who is not Staff, opening the pages. Rejected. A Manager is Staff, and ADR 0024 says what only a Manager can see.
