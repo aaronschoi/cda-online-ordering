@@ -1,6 +1,6 @@
 # One PIN, and the last Manager stays
 
-The first Manager is named before anyone opens the pages. A Manager may add another Manager by recording an email. A Manager cannot remove the last Manager or clear that person's email. A Manager cannot save a PIN that another Staff member already has. Changing or removing the PIN that is acting makes the next staff action wait for a PIN.
+The first Manager is named before anyone opens the pages. A Manager may add another Manager by recording an email. A Manager cannot remove the last Manager or clear that person's email. ADR 0031 says what clearing another Manager's email does. A Manager cannot save a PIN that another Staff member already has. Changing or removing the PIN that is acting makes the next staff action wait for a PIN.
 
 ## Considered options
 
