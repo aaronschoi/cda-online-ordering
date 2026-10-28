@@ -1,28 +1,32 @@
 ---
+import { fill, phrases, type Language } from "../domain/language.ts"
+
 interface Props {
   acting: { name: string } | null
   returnPath: string
+  language: Language
   ask?: boolean
 }
 
-const { acting, returnPath, ask = true } = Astro.props
+const { acting, returnPath, language, ask = true } = Astro.props
+const copy = phrases(language)
 ---
 
 {acting ? (
   <form class="pin-bar" method="post" action="/api/act">
     <input type="hidden" name="intent" value="clear-pin" />
     <input type="hidden" name="return" value={returnPath} />
-    <p>{acting.name} is acting.</p>
-    <button class="quiet" type="submit">Clear PIN</button>
+    <p>{fill(copy.pin.acting, { name: acting.name })}</p>
+    <button class="quiet" type="submit">{copy.pin.clear}</button>
   </form>
 ) : ask ? (
   <form class="pin-bar" method="post" action="/api/act">
     <input type="hidden" name="intent" value="enter-pin" />
     <input type="hidden" name="return" value={returnPath} />
     <label>
-      PIN
+      {copy.pin.label}
       <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
     </label>
-    <button class="primary" type="submit">Use PIN</button>
+    <button class="primary" type="submit">{copy.pin.use}</button>
   </form>
 ) : null}

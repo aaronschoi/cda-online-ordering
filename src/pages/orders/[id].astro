@@ -1,9 +1,15 @@
 ---
+import { fill } from "../../domain/language.ts"
 import Steps from "../../components/Steps.astro"
 import Shell from "../../layouts/Shell.astro"
 import { loadPage, money, when } from "../../server/app.ts"
 
-const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+const { ordering, session, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request,
+)
 if (!session) return Astro.redirect("/")
 if (session.role !== "buyer") return Astro.redirect(`/staff/orders/${Astro.params.id}`)
 const orderId = Astro.params.id ?? ""
@@ -13,19 +19,19 @@ const order = result.value
 const choices = await ordering.changeChoices(session, orderId)
 const open = order.step === "proposed" || order.step === "reserved" || order.step === "prepared"
 const links = [
-  { href: "/line", label: "Line" },
-  { href: "/orders", label: "Orders", current: true },
+  { href: "/line", label: copy.nav.line },
+  { href: "/orders", label: copy.nav.orders, current: true },
 ]
 ---
 
-<Shell title="Order" account={session.buyerName ?? session.email} links={links}>
+<Shell title={copy.order.title} account={session.buyerName ?? session.email} links={links} language={language} requestUrl={Astro.url}>
   <div class="order-head">
     <h1>{order.seasonName}</h1>
-    <p class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</p>
+    <p class={order.confirmation}>{order.confirmation === "confirmed" ? copy.confirmed : copy.unconfirmed}</p>
   </div>
-  <Steps step={order.step} />
+  <Steps step={order.step} labels={copy.steps} />
   {error ? <p class="error">{error}</p> : null}
-  <p>{order.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {when(order.scheduledLocal)}</p>
+  <p>{order.fulfillment === "pickup" ? copy.pickup : copy.delivery} · {when(order.scheduledLocal, language)}</p>
   {order.address ? (
     <p>{order.address.street}, {order.address.city}, {order.address.state} {order.address.zip} · {order.address.phone}</p>
   ) : null}
@@ -33,20 +39,20 @@ const links = [
   <div class="totals">
     {order.lines.map((line) => (
       <div>
-        <span>{line.styleName}, {line.color}, size {line.size} × {line.quantity}</span>
-        <span>{money(line.priceCents * line.quantity)}</span>
+        <span>{fill(copy.namedSku, { name: line.styleName, color: line.color, size: line.size })} × {line.quantity}</span>
+        <span>{money(line.priceCents * line.quantity, language)}</span>
       </div>
     ))}
-    <div><span>Goods</span><span>{money(order.goodsCents)}</span></div>
-    {order.deliveryChargeCents != null ? <div><span>Delivery charge</span><span>{money(order.deliveryChargeCents)}</span></div> : null}
+    <div><span>{copy.goods}</span><span>{money(order.goodsCents, language)}</span></div>
+    {order.deliveryChargeCents != null ? <div><span>{copy.order.deliveryCharge}</span><span>{money(order.deliveryChargeCents, language)}</span></div> : null}
   </div>
 
   {order.waitingChange ? (
     <form method="post" action="/api/act">
       <input type="hidden" name="intent" value="withdraw" />
       <input type="hidden" name="orderId" value={order.id} />
-      <p>A Change request is waiting.</p>
-      <button class="quiet" type="submit">Withdraw the Change request</button>
+      <p>{copy.order.changeWaiting}</p>
+      <button class="quiet" type="submit">{copy.order.withdraw}</button>
     </form>
   ) : null}
 
@@ -54,30 +60,30 @@ const links = [
     <form class="place" method="post" action="/api/act">
       <input type="hidden" name="intent" value="change" />
       <input type="hidden" name="orderId" value={order.id} />
-      <h2>Change request</h2>
+      <h2>{copy.order.changeTitle}</h2>
       {choices.value.map((sku) => (
         <label>
-          {sku.styleName}, {sku.color}, size {sku.size}{sku.onLine ? "" : " (kept on this Order)"}
+          {fill(copy.namedSku, { name: sku.styleName, color: sku.color, size: sku.size })}{sku.onLine ? "" : ` ${copy.order.kept}`}
           <input name={`qty.${sku.skuId}`} type="number" min="0" step="1" value={order.lines.find((line) => line.skuId === sku.skuId)?.quantity ?? 0} />
         </label>
       ))}
       <label>
-        Time
+        {copy.line.time}
         <input name="scheduledLocal" type="datetime-local" value={order.scheduledLocal} required />
       </label>
       {order.fulfillment === "delivery" && order.address ? (
         <fieldset>
-          <label>Street <input name="street" value={order.address.street} required /></label>
+          <label>{copy.line.street} <input name="street" value={order.address.street} required /></label>
           <div class="address">
-            <label>City <input name="city" value={order.address.city} required /></label>
-            <label>State <input name="state" value={order.address.state} required /></label>
-            <label>Zip <input name="zip" value={order.address.zip} required /></label>
-            <label>Phone <input name="phone" value={order.address.phone} required /></label>
+            <label>{copy.line.city} <input name="city" value={order.address.city} required /></label>
+            <label>{copy.line.state} <input name="state" value={order.address.state} required /></label>
+            <label>{copy.line.zip} <input name="zip" value={order.address.zip} required /></label>
+            <label>{copy.line.phone} <input name="phone" value={order.address.phone} required /></label>
           </div>
-          <label>Delivery note <textarea name="deliveryNote" rows="2">{order.deliveryNote ?? ""}</textarea></label>
+          <label>{copy.line.note} <textarea name="deliveryNote" rows="2">{order.deliveryNote ?? ""}</textarea></label>
         </fieldset>
       ) : null}
-      <button class="primary" type="submit">Submit Change request</button>
+      <button class="primary" type="submit">{copy.order.submitChange}</button>
     </form>
   ) : null}
 </Shell>

@@ -55,6 +55,9 @@ function mutableContent(data: ContentData) {
     async intro() {
       return fail.intro ? "unread" : data.intro
     },
+    async intros() {
+      return fail.intro ? "unread" : data.intros
+    },
   }
   return { port, data, fail }
 }

@@ -301,13 +301,14 @@ export function createOrdering(deps: OrderingDeps) {
 
   async function lineFor(session: Session | null): Promise<Result<LineView>> {
     if (!buyer(session)) return fail("forbidden")
-    const [season, lineIds, catalog, location, charge, intro] = await Promise.all([
+    const [season, lineIds, catalog, location, charge, intro, intros] = await Promise.all([
       content.season(),
       content.line(),
       square.catalog(),
       square.location(),
       content.deliveryCharge(),
       content.intro(),
+      content.intros(),
     ])
     if (season === "unread" || lineIds === "unread" || catalog === "unread") return fail("unreadable")
     if (!season || !isSeasonOpen(season.startsAt, season.endsAt, now())) return fail("no-season")
@@ -327,6 +328,7 @@ export function createOrdering(deps: OrderingDeps) {
       ok: true,
       value: {
         intro: intro === "unread" ? "" : intro,
+        intros: intros === "unread" ? { en: "", es: "", ko: "" } : intros,
         seasonName: season.name,
         seasonEndsAt: season.endsAt,
         location: location === "unread" ? null : location,

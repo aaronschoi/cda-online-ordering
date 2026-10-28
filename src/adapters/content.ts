@@ -1,7 +1,7 @@
 import copy from "../content/copy.json"
 import geoText from "../content/delivery-zips.geojson?raw"
 import settings from "../content/settings.json"
-import type { ContentData, ContentPort, ZipShape } from "../domain/types.ts"
+import type { ContentData, ContentPort, SpokenIntro, ZipShape } from "../domain/types.ts"
 
 type ZipFile = { name?: string; code?: string }
 
@@ -10,7 +10,12 @@ const zipModules = import.meta.glob("../content/delivery-zips/*.json", {
   import: "default",
 }) as Record<string, ZipFile>
 
+function spokenIntro(file: { intro?: string; introEs?: string; introKo?: string }): SpokenIntro {
+  return { en: file.intro ?? "", es: file.introEs ?? "", ko: file.introKo ?? "" }
+}
+
 export function bundledContent(): ContentData {
+  const intros = spokenIntro(copy)
   const deliveryZips = Object.entries(zipModules)
     .map(([path, data]) => {
       const file = path.split("/").pop()?.replace(/\.json$/, "") ?? ""
@@ -20,7 +25,8 @@ export function bundledContent(): ContentData {
     .filter((zip) => /^\d{5}$/.test(zip.code))
     .sort((a, b) => a.code.localeCompare(b.code))
   return {
-    intro: copy.intro,
+    intro: intros.en,
+    intros,
     changeCutoffHours: settings.changeCutoffHours,
     deliveryChargeEnabled: settings.deliveryChargeEnabled,
     deliveryChargeCents: settings.deliveryChargeCents,
@@ -67,6 +73,9 @@ export function contentPort(data: ContentData): ContentPort {
     async intro() {
       return data.intro
     },
+    async intros() {
+      return data.intros
+    },
   }
 }
 
@@ -90,6 +99,9 @@ const unread: ContentPort = {
     return "unread"
   },
   async intro() {
+    return "unread"
+  },
+  async intros() {
     return "unread"
   },
 }
@@ -123,8 +135,10 @@ async function contentFromGithub(repo: string, token: string): Promise<ContentDa
       return { code, name: data.name ?? code }
     }),
   )
+  const intros = spokenIntro(copyFile)
   return {
-    intro: copyFile.intro,
+    intro: intros.en,
+    intros,
     changeCutoffHours: settingsFile.changeCutoffHours,
     deliveryChargeEnabled: settingsFile.deliveryChargeEnabled,
     deliveryChargeCents: settingsFile.deliveryChargeCents,

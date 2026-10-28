@@ -1,25 +1,31 @@
 ---
+import { fill } from "../../domain/language.ts"
 import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
 import { drawZips } from "../../domain/map-draw.ts"
 import { loadPage, staffLinks } from "../../server/app.ts"
 
-const { ordering, open, acting, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+const { ordering, open, acting, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request,
+)
 if (!open) return Astro.redirect("/")
 const map = await ordering.deliveryMap(acting ?? open)
 const drawn = map.ok ? drawZips(map.value) : []
 const byCode = new Map(drawn.map((shape) => [shape.code, shape]))
-const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN does not name a Staff member." : error
+const pinError = Astro.url.searchParams.get("error") === "refused" ? copy.pin.missed : error
 ---
 
-<Shell title="Delivery zips" account={acting?.name ?? "Staff"} links={staffLinks("zips")} signOut={false}>
-  <h1>Delivery zips</h1>
-  <p class="lede">A zip is shown when it has a name and a shape. Open it to allow Delivery. Closing it leaves Orders already placed for that zip on Delivery.</p>
-  <PinForm acting={acting} returnPath="/staff/delivery" />
+<Shell title={copy.deliveryMap.title} account={acting?.name ?? copy.staff} links={staffLinks("zips", language)} signOut={false} language={language} requestUrl={Astro.url}>
+  <h1>{copy.deliveryMap.title}</h1>
+  <p class="lede">{copy.deliveryMap.lede}</p>
+  <PinForm acting={acting} returnPath="/staff/delivery" language={language} />
   {pinError ? <p class="error">{pinError}</p> : null}
   {map.ok ? (
     <>
-      <svg class="map" viewBox="0 0 640 420" role="img" aria-label="Delivery zips">
+      <svg class="map" viewBox="0 0 640 420" role="img" aria-label={copy.deliveryMap.mapLabel}>
         {map.value.map((zip) => {
           const shape = byCode.get(zip.code)
           if (!shape) return null
@@ -38,15 +44,15 @@ const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN d
               <input type="hidden" name="intent" value="zip" />
               <input type="hidden" name="code" value={zip.code} />
               <input type="hidden" name="open" value={zip.open ? "0" : "1"} />
-              <button class={zip.open ? "primary" : "quiet"} type="submit">{zip.open ? "Close" : "Open"} {zip.name}</button>
+              <button class={zip.open ? "primary" : "quiet"} type="submit">{fill(zip.open ? copy.deliveryMap.close : copy.deliveryMap.open, { name: zip.name })}</button>
             </form>
           ) : (
-            <p>{zip.name} is {zip.open ? "open" : "closed"}.</p>
+            <p>{fill(zip.open ? copy.deliveryMap.isOpen : copy.deliveryMap.isClosed, { name: zip.name })}</p>
           )
         ))}
       </div>
     </>
   ) : (
-    <p class="error">Delivery zips could not be read.</p>
+    <p class="error">{copy.deliveryMap.unread}</p>
   )}
 </Shell>

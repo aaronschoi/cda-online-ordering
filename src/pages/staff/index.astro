@@ -3,28 +3,33 @@ import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
 import { initial, loadPage, money, staffLinks, stepName, tint, when } from "../../server/app.ts"
 
-const { ordering, open, acting, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+const { ordering, open, acting, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request,
+)
 if (!open) return Astro.redirect("/")
 const orders = await ordering.ordersFor(acting ?? open)
-const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN does not name a Staff member." : error
+const pinError = Astro.url.searchParams.get("error") === "refused" ? copy.pin.missed : error
 ---
 
-<Shell title="Orders" account={acting?.name ?? "Staff"} links={staffLinks("orders")} signOut={false}>
-  <h1>Orders</h1>
-  <p class="lede">Every Order is listed here before anyone enters a PIN. A PIN is required to confirm, advance, cancel, approve, or deny.</p>
-  <PinForm acting={acting} returnPath="/staff" />
+<Shell title={copy.orders.title} account={acting?.name ?? copy.staff} links={staffLinks("orders", language)} signOut={false} language={language} requestUrl={Astro.url}>
+  <h1>{copy.orders.title}</h1>
+  <p class="lede">{copy.orders.beforePin}</p>
+  <PinForm acting={acting} returnPath="/staff" language={language} />
   {pinError ? <p class="error">{pinError}</p> : null}
-  {orders.ok && orders.value.length === 0 ? <p class="empty">No Orders yet.</p> : null}
+  {orders.ok && orders.value.length === 0 ? <p class="empty">{copy.orders.empty}</p> : null}
   {orders.ok && orders.value.length > 0 ? (
     <table>
       <thead>
         <tr>
-          <th>Buyer</th>
-          <th>When</th>
-          <th>Way</th>
-          <th>Confirmation</th>
-          <th>Step</th>
-          <th class="num">Goods</th>
+          <th>{copy.orders.buyer}</th>
+          <th>{copy.orders.when}</th>
+          <th>{copy.orders.way}</th>
+          <th>{copy.orders.confirmation}</th>
+          <th>{copy.orders.step}</th>
+          <th class="num">{copy.goods}</th>
         </tr>
       </thead>
       <tbody>
@@ -36,15 +41,15 @@ const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN d
                 {order.buyerName}
               </a>
             </td>
-            <td>{when(order.scheduledLocal)}</td>
-            <td>{order.fulfillment === "pickup" ? "Pickup" : "Delivery"}</td>
-            <td class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</td>
-            <td>{stepName(order.step)}</td>
-            <td class="num">{money(order.goodsCents + (order.deliveryChargeCents ?? 0))}</td>
+            <td>{when(order.scheduledLocal, language)}</td>
+            <td>{order.fulfillment === "pickup" ? copy.pickup : copy.delivery}</td>
+            <td class={order.confirmation}>{order.confirmation === "confirmed" ? copy.confirmed : copy.unconfirmed}</td>
+            <td>{stepName(order.step, language)}</td>
+            <td class="num">{money(order.goodsCents + (order.deliveryChargeCents ?? 0), language)}</td>
           </tr>
         ))}
       </tbody>
     </table>
   ) : null}
-  {orders.ok ? null : <p class="error">Orders could not be read.</p>}
+  {orders.ok ? null : <p class="error">{copy.orders.unread}</p>}
 </Shell>

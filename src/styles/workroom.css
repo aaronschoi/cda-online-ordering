@@ -2,6 +2,15 @@
 @import "@fontsource/schibsted-grotesk/500.css";
 @import "@fontsource/schibsted-grotesk/600.css";
 
+@font-face {
+  font-family: "CDA Language";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/language-ko.woff2") format("woff2");
+  unicode-range: U+AD6D, U+C5B4, U+D55C;
+}
+
 :root {
   --ink: #17211c;
   --muted: #5c675f;
@@ -14,7 +23,7 @@
   --focus: #243f73;
   color: var(--ink);
   background: var(--ground);
-  font-family: "Schibsted Grotesk", "Avenir Next", sans-serif;
+  font-family: "Schibsted Grotesk", "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", "Avenir Next", sans-serif;
   font-size: 16px;
   line-height: 1.45;
 }
@@ -37,6 +46,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex;
   flex-direction: column;
   gap: 28px;
+}
+
+.languages {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.languages a {
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--paper);
+  white-space: nowrap;
+  font-family: "Schibsted Grotesk", "CDA Language", "Noto Sans KR", "Noto Sans CJK KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  text-align: center;
+}
+.languages a[aria-current="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 .mark {
@@ -172,6 +202,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 760px) {
   .shell { grid-template-columns: 1fr; }
+  .languages { flex-direction: row; flex-wrap: wrap; }
   .rail { border-right: 0; border-bottom: 1px solid var(--rule); }
   .nav { flex-direction: row; flex-wrap: wrap; gap: 14px; }
   .main { padding: 24px 16px 48px; }

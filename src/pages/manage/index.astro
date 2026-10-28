@@ -1,9 +1,15 @@
 ---
+import { fill } from "../../domain/language.ts"
 import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
 import { loadPage, staffLinks, when } from "../../server/app.ts"
 
-const { ordering, open, acting, error, managerEmail } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+const { ordering, open, acting, error, managerEmail, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request,
+)
 if (!open || !managerEmail) return Astro.redirect("/")
 const [directory, record] = await Promise.all([
   ordering.staffDirectory(managerEmail),
@@ -13,27 +19,27 @@ const staff = directory.ok ? directory.value : []
 const managers = staff.filter((member) => member.email).length
 ---
 
-<Shell title="Staff" account={acting?.name ?? "Staff"} links={staffLinks("staff")} signOut={false}>
-  <h1>Staff</h1>
-  <p class="lede">A Manager keeps this list and reads the Staff log. Season, Line, Change cutoff, Delivery charge, Buyer copy, and Delivery zip names are edited in Ordering copy. A PIN is not required for that work.</p>
-  <PinForm acting={acting} returnPath="/manage" ask={false} />
+<Shell title={copy.staff} account={acting?.name ?? copy.staff} links={staffLinks("staff", language)} signOut={false} language={language} requestUrl={Astro.url}>
+  <h1>{copy.staff}</h1>
+  <p class="lede">{copy.manager.lede}</p>
+  <PinForm acting={acting} returnPath="/manage" language={language} ask={false} />
   {error ? <p class="error">{error}</p> : null}
   {directory.ok ? (
     staff.map((member) => (
       <div class="person">
-        <p class="role">{member.email ? `Manager · ${member.email}` : "Staff"}</p>
+        <p class="role">{member.email ? fill(copy.manager.role, { email: member.email }) : copy.staff}</p>
         <form class="person-edit" method="post" action="/api/act">
           <input type="hidden" name="intent" value="save-staff" />
           <input type="hidden" name="id" value={member.id} />
           <label>
-            Name
+            {copy.manager.name}
             <input name="name" required value={member.name} />
           </label>
           <label>
-            PIN
+            {copy.manager.pin}
             <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required value={member.pin ?? ""} />
           </label>
-          <button class="primary" type="submit">Save</button>
+          <button class="primary" type="submit">{copy.manager.save}</button>
         </form>
         {member.email && managers <= 1 ? null : (
           <div class="choice">
@@ -41,61 +47,61 @@ const managers = staff.filter((member) => member.email).length
               <form method="post" action="/api/act">
                 <input type="hidden" name="intent" value="clear-email" />
                 <input type="hidden" name="id" value={member.id} />
-                <button class="quiet" type="submit">Clear email</button>
+                <button class="quiet" type="submit">{copy.manager.clearEmail}</button>
               </form>
             ) : null}
             <form method="post" action="/api/act">
               <input type="hidden" name="intent" value="remove-staff" />
               <input type="hidden" name="id" value={member.id} />
-              <button class="quiet" type="submit">Remove</button>
+              <button class="quiet" type="submit">{copy.manager.remove}</button>
             </form>
           </div>
         )}
       </div>
     ))
   ) : (
-    <p class="error">The Staff list could not be read.</p>
+    <p class="error">{copy.manager.listUnread}</p>
   )}
   <form class="place manage-add" method="post" action="/api/act">
-    <h2>Add Staff</h2>
+    <h2>{copy.manager.addStaff}</h2>
     <input type="hidden" name="intent" value="save-staff" />
     <label>
-      Name
+      {copy.manager.name}
       <input name="name" required />
     </label>
     <label>
-      PIN
+      {copy.manager.pin}
       <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
     </label>
-    <button class="primary" type="submit">Add Staff</button>
+    <button class="primary" type="submit">{copy.manager.addStaff}</button>
   </form>
   <form class="place" method="post" action="/api/act">
-    <h2>Add a Manager</h2>
+    <h2>{copy.manager.addManager}</h2>
     <input type="hidden" name="intent" value="add-manager" />
     <label>
-      Name
+      {copy.manager.name}
       <input name="name" required />
     </label>
     <label>
-      Email
+      {copy.manager.email}
       <input name="email" type="email" autocomplete="off" required />
     </label>
     <label>
-      PIN
+      {copy.manager.pin}
       <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
     </label>
-    <button class="primary" type="submit">Add a Manager</button>
+    <button class="primary" type="submit">{copy.manager.addManager}</button>
   </form>
-  <h2>Staff log</h2>
-  {record.ok && record.value.length === 0 ? <p class="empty">No PIN actions yet.</p> : null}
+  <h2>{copy.manager.logTitle}</h2>
+  {record.ok && record.value.length === 0 ? <p class="empty">{copy.manager.logEmpty}</p> : null}
   {record.ok && record.value.length > 0 ? (
     <table>
       <thead>
         <tr>
-          <th>Staff</th>
-          <th>Action</th>
-          <th>When</th>
-          <th>Order or Delivery zip</th>
+          <th>{copy.staff}</th>
+          <th>{copy.manager.logAction}</th>
+          <th>{copy.orders.when}</th>
+          <th>{copy.manager.logTarget}</th>
         </tr>
       </thead>
       <tbody>
@@ -103,9 +109,9 @@ const managers = staff.filter((member) => member.email).length
           <tr>
             <td>{entry.staffName}</td>
             <td>{entry.action}</td>
-            <td>{when(entry.actedLocal)}</td>
+            <td>{when(entry.actedLocal, language)}</td>
             <td>
-              {entry.orderId ? <a href={`/staff/orders/${entry.orderId}`}>Order</a> : null}
+              {entry.orderId ? <a href={`/staff/orders/${entry.orderId}`}>{copy.order.title}</a> : null}
               {entry.zip ? entry.zip : null}
             </td>
           </tr>
@@ -113,5 +119,5 @@ const managers = staff.filter((member) => member.email).length
       </tbody>
     </table>
   ) : null}
-  {record.ok ? null : <p class="error">The Staff log could not be read.</p>}
+  {record.ok ? null : <p class="error">{copy.manager.logUnread}</p>}
 </Shell>
