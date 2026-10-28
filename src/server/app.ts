@@ -2,7 +2,7 @@ import { loadContent } from "../adapters/content.ts"
 import { createD1Repo, type SqlDatabase } from "../adapters/d1.ts"
 import { schemaSql } from "../adapters/schema.ts"
 import { createSquare } from "../adapters/square.ts"
-import { failureText } from "../domain/failures.ts"
+import { formatMoney, formatWhen, languageChoice, phrases, type Language } from "../domain/language.ts"
 import type { Failure } from "../domain/types.ts"
 import { createOrdering, type Ordering } from "../domain/ordering.ts"
 import { createPasswords } from "../domain/passwords.ts"
@@ -65,35 +65,52 @@ export function envOf(locals: App.Locals): Env {
   return locals.runtime.env as Env
 }
 
-type Cookies = {
+type CookieJar = {
   get(name: string): { value: string } | undefined
+  set(
+    name: string,
+    value: string,
+    options?: {
+      path?: string
+      sameSite?: "lax" | "strict" | "none"
+      maxAge?: number
+      secure?: boolean
+      httpOnly?: boolean
+    },
+  ): void
 }
 
-export async function loadPage(locals: App.Locals, cookies: Cookies, url: URL) {
+export async function loadPage(locals: App.Locals, cookies: CookieJar, url: URL, acceptLanguage: string | null = null) {
   const ordering = await orderingFor(envOf(locals))
   const sessionId = cookies.get("cda_session")?.value
   const session = sessionId ? await ordering.sessionFor(sessionId) : null
+  const choice = languageChoice({
+    query: url.searchParams.get("lang"),
+    cookie: cookies.get("cda_lang")?.value ?? null,
+    accept: acceptLanguage,
+  })
+  if (choice.remember) {
+    cookies.set("cda_lang", choice.remember, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+      secure: import.meta.env.PROD,
+      httpOnly: true,
+    })
+  }
+  const language = choice.language
+  const copy = phrases(language)
   const code = url.searchParams.get("error")
-  const error = code && code in failureText ? failureText[code as Failure] : ""
-  return { ordering, session, error }
+  const error = code && code in copy.failures ? copy.failures[code as Failure] : ""
+  return { ordering, session, error, language, copy }
 }
 
-export function money(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100)
+export function money(cents: number, language: Language = "en"): string {
+  return formatMoney(cents, language)
 }
 
-export function when(local: string): string {
-  const [date, time] = local.split("T")
-  if (!date || !time) return local
-  const [year, month, day] = date.split("-").map(Number)
-  if (!year || !month || !day) return local
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day)))
-  return `${formatted}, ${time}`
+export function when(local: string, language: Language = "en"): string {
+  return formatWhen(local, language)
 }
 
 export function tint(name: string): string {
@@ -106,16 +123,10 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?"
 }
 
-const stepLabels: Record<string, string> = {
-  proposed: "Proposed",
-  reserved: "Reserved",
-  prepared: "Prepared",
-  completed: "Completed",
-  canceled: "Canceled",
-}
-
-export function stepName(step: string): string {
-  return stepLabels[step] ?? step
+export function stepName(step: string, language: Language = "en"): string {
+  const labels = phrases(language).steps
+  if (step in labels) return labels[step as keyof typeof labels]
+  return step
 }
 
 export type { Session }

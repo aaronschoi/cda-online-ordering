@@ -1,59 +1,58 @@
 ---
+import { fill } from "../domain/language.ts"
 import Shell from "../layouts/Shell.astro"
 import { loadPage } from "../server/app.ts"
 
-const { session } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+const { session, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request.headers.get("accept-language"),
+)
 if (session?.role === "buyer") return Astro.redirect("/line")
 if (session?.role === "staff") return Astro.redirect("/staff")
 
-const errorCode = Astro.url.searchParams.get("error")
 const sent = Astro.url.searchParams.get("sent") === "1"
 const email = Astro.url.searchParams.get("email") ?? ""
 const devCode = import.meta.env.DEV ? Astro.cookies.get("cda_dev_code")?.value : undefined
-const messages: Record<string, string> = {
-  refused: "Sign-in is refused.",
-  "no-buyer": "CDA has no Buyer for that email.",
-  unreadable: "That could not be read. Nothing was saved.",
-}
-const error = errorCode ? messages[errorCode] ?? "" : ""
 ---
 
-<Shell title="Sign in">
-  <h1>Sign in</h1>
-  <p class="lede">CDA sells clothing wholesale. A Buyer signs in with a code sent to the Square Customer email. Staff sign in with a password for this app.</p>
+<Shell title={copy.signIn.title} language={language} requestUrl={Astro.url}>
+  <h1>{copy.signIn.title}</h1>
+  <p class="lede">{copy.signIn.lede}</p>
   {error ? <p class="error">{error}</p> : null}
   <div class="sign">
     <form class="place" method="post" action="/api/act">
       <input type="hidden" name="intent" value={sent ? "buyer-sign-in" : "request-code"} />
       <label>
-        Buyer email
+        {copy.signIn.buyerEmail}
         <input name="email" type="email" autocomplete="username" required value={email} />
       </label>
       {sent ? (
         <label>
-          Sign-in code
+          {copy.signIn.code}
           <input name="code" inputmode="numeric" autocomplete="one-time-code" required />
         </label>
       ) : null}
-      <button class="primary" type="submit">{sent ? "Sign in" : "Email a code"}</button>
+      <button class="primary" type="submit">{sent ? copy.signIn.title : copy.signIn.emailCode}</button>
     </form>
     <form class="place" method="post" action="/api/act">
       <input type="hidden" name="intent" value="staff-sign-in" />
       <label>
-        Staff email
+        {copy.signIn.staffEmail}
         <input name="email" type="email" autocomplete="username" required />
       </label>
       <label>
-        Password
+        {copy.signIn.password}
         <input name="password" type="password" autocomplete="current-password" required />
       </label>
-      <button class="quiet" type="submit">Sign in as Staff</button>
+      <button class="quiet" type="submit">{copy.signIn.staffSubmit}</button>
     </form>
   </div>
   {import.meta.env.DEV ? (
     <p class="local">
-      {devCode ? `Local inbox code: ${devCode}. ` : ""}
-      Local Staff sign-in is staff@cda.example with password cda-staff. The Buyer fixture is buyer@atelier.example.
+      {devCode ? `${fill(copy.signIn.localCode, { code: devCode })} ` : ""}
+      {copy.signIn.localHint}
     </p>
   ) : null}
 </Shell>

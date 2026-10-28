@@ -50,7 +50,9 @@ export default config({
       path: "src/content/copy",
       format: { data: "json" },
       schema: {
-        intro: fields.text({ label: "Line intro", multiline: true }),
+        intro: fields.text({ label: "Line intro (English)", multiline: true }),
+        introEs: fields.text({ label: "Line intro (Español)", multiline: true }),
+        introKo: fields.text({ label: "Line intro (한국어)", multiline: true }),
       },
     }),
   },

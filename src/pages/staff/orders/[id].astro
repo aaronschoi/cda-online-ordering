@@ -1,65 +1,79 @@
 ---
+import { fill } from "../../../domain/language.ts"
 import Steps from "../../../components/Steps.astro"
 import Shell from "../../../layouts/Shell.astro"
 import { loadPage, money, when } from "../../../server/app.ts"
 
-const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+const { ordering, session, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request.headers.get("accept-language"),
+)
 if (!session) return Astro.redirect("/")
 if (session.role !== "staff") return Astro.redirect("/")
 const orderId = Astro.params.id ?? ""
 const result = await ordering.orderFor(session, orderId)
 if (!result.ok) return Astro.redirect("/staff")
 const order = result.value
-const nextLabel = order.actions?.advance === "reserved" ? "Mark Reserved" : order.actions?.advance === "prepared" ? "Mark Prepared" : order.actions?.advance === "completed" ? "Mark Completed" : ""
+const advance = order.actions?.advance
+const nextLabel =
+  advance === "reserved"
+    ? copy.staffOrder.markReserved
+    : advance === "prepared"
+      ? copy.staffOrder.markPrepared
+      : advance === "completed"
+        ? copy.staffOrder.markCompleted
+        : ""
 const links = [
-  { href: "/staff", label: "Orders", current: true },
-  { href: "/staff/delivery", label: "Delivery zips" },
-  { href: "/keystatic", label: "Ordering copy" },
+  { href: "/staff", label: copy.nav.orders, current: true },
+  { href: "/staff/delivery", label: copy.nav.deliveryZips },
+  { href: "/keystatic", label: copy.nav.orderingCopy },
 ]
 ---
 
-<Shell title={order.buyerName} account="Staff" links={links}>
+<Shell title={order.buyerName} account={copy.staff} links={links} language={language} requestUrl={Astro.url}>
   <div class="order-head">
     <h1>{order.buyerName}</h1>
-    <p class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</p>
+    <p class={order.confirmation}>{order.confirmation === "confirmed" ? copy.confirmed : copy.unconfirmed}</p>
   </div>
-  <Steps step={order.step} />
+  <Steps step={order.step} labels={copy.steps} />
   {error ? <p class="error">{error}</p> : null}
-  <p>{order.seasonName} · {order.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {when(order.scheduledLocal)}</p>
+  <p>{order.seasonName} · {order.fulfillment === "pickup" ? copy.pickup : copy.delivery} · {when(order.scheduledLocal, language)}</p>
   {order.address ? <p>{order.address.street}, {order.address.city}, {order.address.state} {order.address.zip} · {order.address.phone}</p> : null}
   {order.deliveryNote ? <p>{order.deliveryNote}</p> : null}
-  {order.unitsOnHandUnreadable ? <p class="error">Units on hand could not be read.</p> : null}
+  {order.unitsOnHandUnreadable ? <p class="error">{copy.staffOrder.unitsUnread}</p> : null}
   <table>
     <thead>
       <tr>
-        <th>SKU</th>
-        <th class="num">Quantity</th>
-        <th class="num">Price</th>
-        <th class="num">Units on hand</th>
+        <th>{copy.staffOrder.sku}</th>
+        <th class="num">{copy.staffOrder.quantity}</th>
+        <th class="num">{copy.staffOrder.price}</th>
+        <th class="num">{copy.staffOrder.units}</th>
       </tr>
     </thead>
     <tbody>
       {order.lines.map((line) => (
         <tr>
-          <td>{line.styleName}, {line.color}, size {line.size}<div class="meta">{line.styleDescription}</div></td>
+          <td>{fill(copy.namedSku, { name: line.styleName, color: line.color, size: line.size })}<div class="meta">{line.styleDescription}</div></td>
           <td class="num">{line.quantity}</td>
-          <td class="num">{money(line.priceCents)}</td>
+          <td class="num">{money(line.priceCents, language)}</td>
           <td class="num">{line.unitsOnHand == null ? "—" : line.unitsOnHand}</td>
         </tr>
       ))}
     </tbody>
   </table>
   <div class="totals">
-    <div><span>Goods</span><span>{money(order.goodsCents)}</span></div>
-    {order.deliveryChargeCents != null ? <div><span>Delivery charge</span><span>{money(order.deliveryChargeCents)}</span></div> : null}
+    <div><span>{copy.goods}</span><span>{money(order.goodsCents, language)}</span></div>
+    {order.deliveryChargeCents != null ? <div><span>{copy.order.deliveryCharge}</span><span>{money(order.deliveryChargeCents, language)}</span></div> : null}
   </div>
-  <p class="lede">Fulfill this sale in Square, then mark it Completed here.</p>
+  <p class="lede">{copy.staffOrder.fulfill}</p>
   <div class="choice">
     {order.actions?.confirm ? (
       <form method="post" action="/api/act">
         <input type="hidden" name="intent" value="confirm" />
         <input type="hidden" name="orderId" value={order.id} />
-        <button class="primary" type="submit">Confirm</button>
+        <button class="primary" type="submit">{copy.staffOrder.confirm}</button>
       </form>
     ) : null}
     {nextLabel ? (
@@ -73,28 +87,28 @@ const links = [
       <form method="post" action="/api/act">
         <input type="hidden" name="intent" value="cancel" />
         <input type="hidden" name="orderId" value={order.id} />
-        <button class="quiet" type="submit">Cancel</button>
+        <button class="quiet" type="submit">{copy.staffOrder.cancel}</button>
       </form>
     ) : null}
   </div>
   {order.waitingChange ? (
     <section>
-      <h2>Change request</h2>
+      <h2>{copy.order.changeTitle}</h2>
       {order.waitingChange.lines.map((line) => (
-        <p>{line.styleName}, {line.color}, size {line.size} × {line.quantity}{line.priceCents == null ? ", price at approval" : ` · ${money(line.priceCents)}`}</p>
+        <p>{fill(copy.namedSku, { name: line.styleName, color: line.color, size: line.size })} × {line.quantity}{line.priceCents == null ? copy.order.priceAtApproval : ` · ${money(line.priceCents, language)}`}</p>
       ))}
-      <p>{when(order.waitingChange.scheduledLocal)}</p>
+      <p>{when(order.waitingChange.scheduledLocal, language)}</p>
       {order.waitingChange.address ? <p>{order.waitingChange.address.street}, {order.waitingChange.address.zip} · {order.waitingChange.address.phone}</p> : null}
       <div class="choice">
         <form method="post" action="/api/act">
           <input type="hidden" name="intent" value="approve" />
           <input type="hidden" name="orderId" value={order.id} />
-          <button class="primary" type="submit">Approve</button>
+          <button class="primary" type="submit">{copy.staffOrder.approve}</button>
         </form>
         <form method="post" action="/api/act">
           <input type="hidden" name="intent" value="deny" />
           <input type="hidden" name="orderId" value={order.id} />
-          <button class="quiet" type="submit">Deny</button>
+          <button class="quiet" type="submit">{copy.staffOrder.deny}</button>
         </form>
       </div>
     </section>

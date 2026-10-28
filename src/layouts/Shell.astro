@@ -1,5 +1,10 @@
 ---
+import kr400 from "@fontsource/noto-sans-kr/files/noto-sans-kr-korean-400-normal.woff2?url"
+import kr600 from "@fontsource/noto-sans-kr/files/noto-sans-kr-korean-600-normal.woff2?url"
+import { languageHref, languages, phrases, type Language } from "../domain/language.ts"
 import "../styles/workroom.css"
+
+const koreanFaces = `@font-face{font-family:"Noto Sans KR";font-style:normal;font-weight:400;font-display:swap;src:url("${kr400}") format("woff2");}@font-face{font-family:"Noto Sans KR";font-style:normal;font-weight:600;font-display:swap;src:url("${kr600}") format("woff2");}`
 
 interface Link {
   href: string
@@ -11,20 +16,36 @@ interface Props {
   title: string
   links?: Link[]
   account?: string
+  language: Language
+  requestUrl: URL
 }
 
-const { title, links = [], account } = Astro.props
+const { title, links = [], account, language, requestUrl } = Astro.props
+const copy = phrases(language)
 ---
 
-<html lang="en">
+<html lang={language}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · CDA</title>
+    {language === "ko" ? <style is:inline set:html={koreanFaces} /> : null}
   </head>
   <body>
     <div class="shell" data-ui="workroom">
       <aside class="rail">
+        <nav class="languages" aria-label={copy.switchLabel}>
+          {languages.map((item) => (
+            <a
+              href={languageHref(requestUrl, item.id)}
+              hreflang={item.id}
+              lang={item.id}
+              aria-current={item.id === language ? "true" : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
         <a class="mark" href="/">
           <svg class="folds" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
             <path d="M4 7h20M4 14h20M4 21h20" fill="none" stroke="#17211c" stroke-width="1.5" />
@@ -32,7 +53,7 @@ const { title, links = [], account } = Astro.props
           </svg>
           <div>
             <strong>CDA</strong>
-            <span>Wholesale</span>
+            <span>{copy.wholesale}</span>
           </div>
         </a>
         {account ? <p class="lede">{account}</p> : null}
@@ -43,7 +64,7 @@ const { title, links = [], account } = Astro.props
           {account ? (
             <form method="post" action="/api/act">
               <input type="hidden" name="intent" value="sign-out" />
-              <button type="submit">Sign out</button>
+              <button type="submit">{copy.signOut}</button>
             </form>
           ) : null}
         </nav>

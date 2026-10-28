@@ -95,8 +95,11 @@ export type ZipShape = {
   rings: number[][][]
 }
 
+export type SpokenIntro = { en: string; es: string; ko: string }
+
 export type ContentData = {
   intro: string
+  intros: SpokenIntro
   changeCutoffHours: number
   deliveryChargeEnabled: boolean
   deliveryChargeCents: number
@@ -114,6 +117,7 @@ export type ContentPort = {
   deliveryZips(): Promise<{ code: string; name: string }[] | "unread">
   shapes(): Promise<ZipShape[] | "unread">
   intro(): Promise<string | "unread">
+  intros(): Promise<SpokenIntro | "unread">
 }
 
 export type Mailer = {
@@ -235,6 +239,7 @@ export type SkuChoice = {
 
 export type LineView = {
   intro: string
+  intros: SpokenIntro
   seasonName: string
   seasonEndsAt: string
   location: LocationInfo | null

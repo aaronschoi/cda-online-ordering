@@ -1,23 +1,25 @@
 ---
 interface Props {
   step: string
+  labels: {
+    proposed: string
+    reserved: string
+    prepared: string
+    completed: string
+    canceled: string
+  }
 }
-const { step } = Astro.props
-const steps = [
-  ["proposed", "Proposed"],
-  ["reserved", "Reserved"],
-  ["prepared", "Prepared"],
-  ["completed", "Completed"],
-] as const
-const index = steps.findIndex(([id]) => id === step)
+const { step, labels } = Astro.props
+const steps = ["proposed", "reserved", "prepared", "completed"] as const
+const index = steps.findIndex((id) => id === step)
 ---
 
 {step === "canceled" ? (
-  <p class="canceled">Canceled</p>
+  <p class="canceled">{labels.canceled}</p>
 ) : (
   <p class="steps">
-    {steps.map(([id, label], position) => (
-      <span class={position === index ? "now" : undefined}>{label}</span>
+    {steps.map((id, position) => (
+      <span class={position === index ? "now" : undefined}>{labels[id]}</span>
     ))}
   </p>
 )}

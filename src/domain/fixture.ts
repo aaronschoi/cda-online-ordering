@@ -71,6 +71,11 @@ export const fixtureOnHand: Record<string, number> = {
 
 export const fixtureContentBase: Omit<ContentData, "shapes"> = {
   intro: "The Spring line is open. Choose the SKUs, then place the Order for Pickup or Delivery.",
+  intros: {
+    en: "The Spring line is open. Choose the SKUs, then place the Order for Pickup or Delivery.",
+    es: "La línea de primavera está abierta. Elige los SKU y haz el pedido para recogida o entrega.",
+    ko: "봄 라인이 열렸습니다. SKU를 고른 다음 픽업 또는 배송으로 주문하세요.",
+  },
   changeCutoffHours: 24,
   deliveryChargeEnabled: true,
   deliveryChargeCents: 1500,

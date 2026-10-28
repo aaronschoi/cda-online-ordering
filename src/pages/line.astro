@@ -1,31 +1,38 @@
 ---
+import { fill, introIn } from "../domain/language.ts"
 import Shell from "../layouts/Shell.astro"
 import { loadPage, money } from "../server/app.ts"
 
-const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+const { ordering, session, error, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request.headers.get("accept-language"),
+)
 if (!session) return Astro.redirect("/")
 if (session.role !== "buyer") return Astro.redirect("/staff")
 
 const line = await ordering.lineFor(session)
 const links = [
-  { href: "/line", label: "Line", current: true },
-  { href: "/orders", label: "Orders" },
+  { href: "/line", label: copy.nav.line, current: true },
+  { href: "/orders", label: copy.nav.orders },
 ]
+const intro = line.ok ? introIn(language, line.value.intros) : ""
 ---
 
-<Shell title="Line" account={session.buyerName ?? session.email} links={links}>
-  <h1>{line.ok ? line.value.seasonName : "Line"}</h1>
+<Shell title={copy.nav.line} account={session.buyerName ?? session.email} links={links} language={language} requestUrl={Astro.url}>
+  <h1>{line.ok ? line.value.seasonName : copy.nav.line}</h1>
   {error ? <p class="error">{error}</p> : null}
   {line.ok ? (
     <form method="post" action="/api/act">
       <input type="hidden" name="intent" value="place" />
-      {line.value.intro ? <p class="lede">{line.value.intro}</p> : null}
+      {intro ? <p class="lede">{intro}</p> : null}
       {line.value.location ? (
-        <p class="lede">Pickup is at {line.value.location.name}, {line.value.location.address}. Times use {line.value.location.timezone}.</p>
+        <p class="lede">{fill(copy.line.pickupAt, { name: line.value.location.name, address: line.value.location.address, timezone: line.value.location.timezone })}</p>
       ) : (
-        <p class="error">The Pickup location could not be read.</p>
+        <p class="error">{copy.line.locationUnread}</p>
       )}
-      {line.value.styles.length === 0 ? <p class="empty">No Styles are on the Line.</p> : null}
+      {line.value.styles.length === 0 ? <p class="empty">{copy.line.empty}</p> : null}
       {line.value.styles.map((style) => (
         <section class="style">
           <h2>{style.name}</h2>
@@ -34,11 +41,11 @@ const links = [
             <div class="sku">
               {sku.pictureUrl ? <img src={sku.pictureUrl} alt="" /> : <span></span>}
               <div>
-                <div>{sku.color}, size {sku.size}</div>
-                <div class="meta">{money(sku.priceCents)}</div>
+                <div>{fill(copy.colorSize, { color: sku.color, size: sku.size })}</div>
+                <div class="meta">{money(sku.priceCents, language)}</div>
               </div>
               <label>
-                Quantity
+                {copy.line.quantity}
                 <input name={`qty.${sku.skuId}`} type="number" min="0" step="1" inputmode="numeric" value="0" />
               </label>
             </div>
@@ -47,27 +54,27 @@ const links = [
       ))}
       <div class="place">
         <div class="choice">
-          <label><input type="radio" name="fulfillment" value="pickup" checked /> Pickup</label>
-          <label><input type="radio" name="fulfillment" value="delivery" /> Delivery{line.value.deliveryChargeCents ? `, ${money(line.value.deliveryChargeCents)}` : ""}</label>
+          <label><input type="radio" name="fulfillment" value="pickup" checked /> {copy.pickup}</label>
+          <label><input type="radio" name="fulfillment" value="delivery" /> {copy.delivery}{line.value.deliveryChargeCents ? `, ${money(line.value.deliveryChargeCents, language)}` : ""}</label>
         </div>
         <label>
-          Time
+          {copy.line.time}
           <input name="scheduledLocal" type="datetime-local" required />
         </label>
         <fieldset>
-          <label>Street <input name="street" autocomplete="street-address" /></label>
+          <label>{copy.line.street} <input name="street" autocomplete="street-address" /></label>
           <div class="address">
-            <label>City <input name="city" autocomplete="address-level2" /></label>
-            <label>State <input name="state" autocomplete="address-level1" /></label>
-            <label>Zip <input name="zip" autocomplete="postal-code" /></label>
-            <label>Phone <input name="phone" autocomplete="tel" /></label>
+            <label>{copy.line.city} <input name="city" autocomplete="address-level2" /></label>
+            <label>{copy.line.state} <input name="state" autocomplete="address-level1" /></label>
+            <label>{copy.line.zip} <input name="zip" autocomplete="postal-code" /></label>
+            <label>{copy.line.phone} <input name="phone" autocomplete="tel" /></label>
           </div>
-          <label>Delivery note <textarea name="deliveryNote" rows="2"></textarea></label>
+          <label>{copy.line.note} <textarea name="deliveryNote" rows="2"></textarea></label>
         </fieldset>
-        <button class="primary" type="submit">Place Order</button>
+        <button class="primary" type="submit">{copy.line.place}</button>
       </div>
     </form>
   ) : (
-    <p class="lede">{line.error === "no-season" ? "No Season is open." : "The Line could not be read."}</p>
+    <p class="lede">{line.error === "no-season" ? copy.failures["no-season"] : copy.line.unread}</p>
   )}
 </Shell>

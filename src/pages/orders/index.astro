@@ -2,40 +2,45 @@
 import Shell from "../../layouts/Shell.astro"
 import { loadPage, money, stepName, when } from "../../server/app.ts"
 
-const { ordering, session } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+const { ordering, session, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request.headers.get("accept-language"),
+)
 if (!session) return Astro.redirect("/")
 if (session.role !== "buyer") return Astro.redirect("/staff")
 const orders = await ordering.ordersFor(session)
 const links = [
-  { href: "/line", label: "Line" },
-  { href: "/orders", label: "Orders", current: true },
+  { href: "/line", label: copy.nav.line },
+  { href: "/orders", label: copy.nav.orders, current: true },
 ]
 ---
 
-<Shell title="Orders" account={session.buyerName ?? session.email} links={links}>
-  <h1>Orders</h1>
-  {orders.ok && orders.value.length === 0 ? <p class="empty">No Orders yet. <a href="/line">Choose from the Line.</a></p> : null}
+<Shell title={copy.orders.title} account={session.buyerName ?? session.email} links={links} language={language} requestUrl={Astro.url}>
+  <h1>{copy.orders.title}</h1>
+  {orders.ok && orders.value.length === 0 ? <p class="empty">{copy.orders.empty} <a href="/line">{copy.orders.choose}</a></p> : null}
   {orders.ok && orders.value.length > 0 ? (
     <table>
       <thead>
         <tr>
-          <th>Season</th>
-          <th>When</th>
-          <th>Way</th>
-          <th>Confirmation</th>
-          <th>Step</th>
-          <th class="num">Goods</th>
+          <th>{copy.orders.season}</th>
+          <th>{copy.orders.when}</th>
+          <th>{copy.orders.way}</th>
+          <th>{copy.orders.confirmation}</th>
+          <th>{copy.orders.step}</th>
+          <th class="num">{copy.goods}</th>
         </tr>
       </thead>
       <tbody>
         {orders.value.map((order) => (
           <tr>
             <td><a href={`/orders/${order.id}`}>{order.seasonName}</a></td>
-            <td>{when(order.scheduledLocal)}</td>
-            <td>{order.fulfillment === "pickup" ? "Pickup" : "Delivery"}</td>
-            <td class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</td>
-            <td>{stepName(order.step)}</td>
-            <td class="num">{money(order.goodsCents)}</td>
+            <td>{when(order.scheduledLocal, language)}</td>
+            <td>{order.fulfillment === "pickup" ? copy.pickup : copy.delivery}</td>
+            <td class={order.confirmation}>{order.confirmation === "confirmed" ? copy.confirmed : copy.unconfirmed}</td>
+            <td>{stepName(order.step, language)}</td>
+            <td class="num">{money(order.goodsCents, language)}</td>
           </tr>
         ))}
       </tbody>
