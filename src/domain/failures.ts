@@ -1,0 +1,27 @@
+import type { Failure } from "./types.ts"
+
+export const failureText: Record<Failure, string> = {
+  refused: "Sign-in is refused.",
+  "no-buyer": "CDA has no Buyer for that email.",
+  "no-season": "No Season is open.",
+  unreadable: "That could not be read. Nothing was saved.",
+  "delivery-closed": "That Delivery zip is closed. Pickup is still available.",
+  "delivery-unavailable": "Delivery cannot be chosen. Pickup is still available.",
+  "need-phone": "Delivery needs a phone number.",
+  "empty-order": "An Order needs at least one SKU.",
+  "bad-quantity": "A Quantity is a positive whole number.",
+  "bad-time": "That time is after the Season ends.",
+  "not-on-line": "That Style is not on the Line.",
+  cutoff: "The Change cutoff has passed.",
+  waiting: "A Change request is already waiting.",
+  "not-found": "That Order is not here.",
+  forbidden: "That is not available.",
+  "cannot-switch": "An Order stays Pickup or Delivery.",
+  "cannot-advance": "That step is not available.",
+  unconfirmed: "Staff confirm the Order before that step.",
+  "change-waiting": "A waiting Change request blocks Completed.",
+  "missing-price": "A SKU has no Square price.",
+  "zip-closed": "That Delivery zip is not open.",
+  "not-on-map": "That zip is not on the map.",
+  "bad-address": "A Delivery address needs a street, city, state, zip, and phone number.",
+}

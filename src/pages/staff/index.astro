@@ -1,0 +1,51 @@
+---
+import Shell from "../../layouts/Shell.astro"
+import { initial, loadPage, money, stepName, tint, when } from "../../server/app.ts"
+
+const { ordering, session } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+if (!session) return Astro.redirect("/")
+if (session.role !== "staff") return Astro.redirect("/orders")
+const orders = await ordering.ordersFor(session)
+const links = [
+  { href: "/staff", label: "Orders", current: true },
+  { href: "/staff/delivery", label: "Delivery zips" },
+  { href: "/keystatic", label: "Ordering copy" },
+]
+---
+
+<Shell title="Orders" account="Staff" links={links}>
+  <h1>Orders</h1>
+  {orders.ok && orders.value.length === 0 ? <p class="empty">No Orders yet.</p> : null}
+  {orders.ok && orders.value.length > 0 ? (
+    <table>
+      <thead>
+        <tr>
+          <th>Buyer</th>
+          <th>When</th>
+          <th>Way</th>
+          <th>Confirmation</th>
+          <th>Step</th>
+          <th class="num">Goods</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.value.map((order) => (
+          <tr>
+            <td>
+              <a class="who" href={`/staff/orders/${order.id}`}>
+                <i style={`background:${tint(order.buyerName)}`}>{initial(order.buyerName)}</i>
+                {order.buyerName}
+              </a>
+            </td>
+            <td>{when(order.scheduledLocal)}</td>
+            <td>{order.fulfillment === "pickup" ? "Pickup" : "Delivery"}</td>
+            <td class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</td>
+            <td>{stepName(order.step)}</td>
+            <td class="num">{money(order.goodsCents + (order.deliveryChargeCents ?? 0))}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : null}
+  {orders.ok ? null : <p class="error">Orders could not be read.</p>}
+</Shell>

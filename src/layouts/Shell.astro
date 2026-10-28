@@ -1,0 +1,56 @@
+---
+import "../styles/workroom.css"
+
+interface Link {
+  href: string
+  label: string
+  current?: boolean
+}
+
+interface Props {
+  title: string
+  links?: Link[]
+  account?: string
+}
+
+const { title, links = [], account } = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · CDA</title>
+  </head>
+  <body>
+    <div class="shell" data-ui="workroom">
+      <aside class="rail">
+        <a class="mark" href="/">
+          <svg class="folds" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+            <path d="M4 7h20M4 14h20M4 21h20" fill="none" stroke="#17211c" stroke-width="1.5" />
+            <path d="M8 7c2 2 2 3 0 7s-2 5 0 7" fill="none" stroke="#243f73" stroke-width="1.5" />
+          </svg>
+          <div>
+            <strong>CDA</strong>
+            <span>Wholesale</span>
+          </div>
+        </a>
+        {account ? <p class="lede">{account}</p> : null}
+        <nav class="nav">
+          {links.map((link) => (
+            <a href={link.href} aria-current={link.current ? "page" : undefined}>{link.label}</a>
+          ))}
+          {account ? (
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="sign-out" />
+              <button type="submit">Sign out</button>
+            </form>
+          ) : null}
+        </nav>
+      </aside>
+      <main class="main">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

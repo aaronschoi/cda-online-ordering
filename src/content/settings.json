@@ -1,0 +1,9 @@
+{
+  "changeCutoffHours": 24,
+  "deliveryChargeEnabled": true,
+  "deliveryChargeCents": 1500,
+  "seasonName": "Spring 2027",
+  "seasonStartsAt": "2026-10-01T00:00:00-07:00",
+  "seasonEndsAt": "2027-03-31T23:59:00-07:00",
+  "lineStyleIds": ["style-jacket", "style-trouser"]
+}
