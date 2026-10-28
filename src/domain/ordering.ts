@@ -1,5 +1,6 @@
 import { hashSignInCode } from "./passwords.ts"
 import type {
+  Acting,
   Address,
   ChangeInput,
   ChangePayload,
@@ -12,10 +13,10 @@ import type {
   LineView,
   Mailer,
   MapZip,
+  OpenStaff,
   OrderActions,
   OrderRecord,
   OrderView,
-  Passwords,
   PlaceInput,
   Repo,
   Result,
@@ -23,9 +24,10 @@ import type {
   Sku,
   SkuChoice,
   SquarePort,
+  StaffRecord,
   Style,
 } from "./types.ts"
-import { isSeasonOpen, localToUtc } from "./time.ts"
+import { formatLocal, isSeasonOpen, localToUtc } from "./time.ts"
 
 const sessionDays = 14
 const codeMinutes = 10
@@ -46,13 +48,14 @@ export type OrderingDeps = {
   square: SquarePort
   content: ContentPort
   mailer: Mailer
-  passwords: Passwords
   ids: Ids
   now(): Date
 }
 
+type Viewer = Session | Acting | OpenStaff | null
+
 export function createOrdering(deps: OrderingDeps) {
-  const { repo, square, content, mailer, passwords, ids, now } = deps
+  const { repo, square, content, mailer, ids, now } = deps
 
   function fail<T>(error: Failure): Result<T> {
     return { ok: false, error }
@@ -65,12 +68,154 @@ export function createOrdering(deps: OrderingDeps) {
   }
 
   async function overlap(email: string): Promise<"both" | "staff" | "buyer" | "neither" | "unread"> {
-    const [staff, customer] = await Promise.all([repo.findStaff(email), square.customerByEmail(email)])
+    const [staff, customer] = await Promise.all([repo.findStaffByEmail(email), square.customerByEmail(email)])
     if (customer === "unread") return "unread"
-    if (staff && customer) return "both"
-    if (staff) return "staff"
+    if (staff?.email && customer) return "both"
+    if (staff?.email) return "staff"
     if (customer) return "buyer"
     return "neither"
+  }
+
+  function isActing(actor: Viewer): actor is Acting {
+    return !!actor && actor.role === "acting"
+  }
+
+  function isStaffView(actor: Viewer): actor is Acting | OpenStaff {
+    return !!actor && (actor.role === "acting" || actor.role === "open")
+  }
+
+  async function ready(actor: Viewer): Promise<{ acting: Acting; actedLocal: string } | Failure> {
+    if (!isActing(actor)) return "forbidden"
+    const location = await square.location()
+    if (location === "unread") return "unreadable"
+    const actedLocal = formatLocal(now(), location.timezone)
+    if (!actedLocal) return "unreadable"
+    return { acting: actor, actedLocal }
+  }
+
+  async function note(acting: Acting, actedLocal: string, action: string, orderId: string | null, zip: string | null) {
+    await repo.insertStaffLog({
+      id: ids.next(),
+      staffName: acting.name,
+      action,
+      orderId,
+      zip,
+      actedLocal,
+    })
+  }
+
+  async function ensureFirstManager(emailInput: string): Promise<Result<{ created: boolean }>> {
+    const email = emailOf(emailInput)
+    if (!email) return fail("refused")
+    const existing = await repo.listStaff()
+    if (existing.some((member) => member.email)) return { ok: true, value: { created: false } }
+    const who = await overlap(email)
+    if (who === "unread") return fail("unreadable")
+    if (who !== "neither") return fail("refused")
+    await repo.insertStaff({ id: ids.next(), name: "", email, pin: null })
+    return { ok: true, value: { created: true } }
+  }
+
+  async function admit(emailInput: string): Promise<Result<OpenStaff>> {
+    const email = emailOf(emailInput)
+    if (!email) return fail("forbidden")
+    const member = await repo.findStaffByEmail(email)
+    if (!member?.email) return fail("forbidden")
+    const customer = await square.customerByEmail(email)
+    if (customer === "unread") return fail("unreadable")
+    if (customer) return fail("refused")
+    return { ok: true, value: { role: "open" } }
+  }
+
+  async function enterPin(pin: string): Promise<Result<Acting>> {
+    if (!/^\d{4}$/.test(pin)) return fail("refused")
+    const member = await repo.findStaffByPin(pin)
+    if (!member?.name.trim()) return fail("refused")
+    return { ok: true, value: { role: "acting", staffId: member.id, name: member.name } }
+  }
+
+  async function actingFor(pin: string): Promise<Acting | null> {
+    if (!/^\d{4}$/.test(pin)) return null
+    const member = await repo.findStaffByPin(pin)
+    if (!member?.name.trim()) return null
+    return { role: "acting", staffId: member.id, name: member.name }
+  }
+
+  function sameName(left: string, right: string): boolean {
+    const name = left.trim().toLowerCase()
+    return name.length > 0 && name === right.trim().toLowerCase()
+  }
+
+  async function saveStaff(managerEmail: string, input: { id?: string; name: string; pin: string }): Promise<Result<StaffRecord[]>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    const name = input.name.trim()
+    if (!name || !/^\d{4}$/.test(input.pin)) return fail("refused")
+    const all = await repo.listStaff()
+    if (all.some((member) => member.id !== input.id && sameName(member.name, name))) return fail("taken")
+    if (all.some((member) => member.id !== input.id && member.pin === input.pin)) return fail("taken")
+    if (!input.id) {
+      await repo.insertStaff({ id: ids.next(), name, email: null, pin: input.pin })
+    } else {
+      const current = all.find((member) => member.id === input.id)
+      if (!current) return fail("not-found")
+      await repo.updateStaff({ ...current, name, pin: input.pin })
+    }
+    return { ok: true, value: await repo.listStaff() }
+  }
+
+  async function addManager(
+    managerEmail: string,
+    input: { name: string; pin: string; email: string },
+  ): Promise<Result<StaffRecord[]>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    const name = input.name.trim()
+    const email = emailOf(input.email)
+    if (!name || !email || !/^\d{4}$/.test(input.pin)) return fail("refused")
+    const customer = await square.customerByEmail(email)
+    if (customer === "unread") return fail("unreadable")
+    if (customer) return fail("refused")
+    const all = await repo.listStaff()
+    if (all.some((member) => member.email === email)) return fail("taken")
+    if (all.some((member) => sameName(member.name, name))) return fail("taken")
+    if (all.some((member) => member.pin === input.pin)) return fail("taken")
+    await repo.insertStaff({ id: ids.next(), name, email, pin: input.pin })
+    return { ok: true, value: await repo.listStaff() }
+  }
+
+  async function clearManagerEmail(managerEmail: string, id: string): Promise<Result<StaffRecord[]>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    const all = await repo.listStaff()
+    const current = all.find((member) => member.id === id)
+    if (!current?.email) return fail("not-found")
+    if (all.filter((member) => member.email).length <= 1) return fail("last-manager")
+    await repo.updateStaff({ ...current, email: null })
+    return { ok: true, value: await repo.listStaff() }
+  }
+
+  async function removeStaff(managerEmail: string, id: string): Promise<Result<StaffRecord[]>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    const all = await repo.listStaff()
+    const current = all.find((member) => member.id === id)
+    if (!current) return fail("not-found")
+    if (current.email && all.filter((member) => member.email).length <= 1) return fail("last-manager")
+    await repo.deleteStaff(id)
+    return { ok: true, value: await repo.listStaff() }
+  }
+
+  async function staffDirectory(managerEmail: string): Promise<Result<StaffRecord[]>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    return { ok: true, value: await repo.listStaff() }
+  }
+
+  async function staffRecord(managerEmail: string): Promise<Result<Awaited<ReturnType<Repo["staffLog"]>>>> {
+    const gate = await admit(managerEmail)
+    if (!gate.ok) return gate
+    return { ok: true, value: await repo.staffLog() }
   }
 
   async function sessionFor(id: string): Promise<Session | null> {
@@ -82,11 +227,6 @@ export function createOrdering(deps: OrderingDeps) {
 
   function buyer(session: Session | null): Session | null {
     if (!session || session.role !== "buyer") return null
-    return session
-  }
-
-  function staff(session: Session | null): Session | null {
-    if (!session || session.role !== "staff") return null
     return session
   }
 
@@ -127,26 +267,6 @@ export function createOrdering(deps: OrderingDeps) {
       email,
       buyerName: customer.name,
       squareCustomerId: customer.id,
-      expiresAt: new Date(now().getTime() + sessionDays * 86_400_000).toISOString(),
-    }
-    await repo.createSession(session)
-    return { ok: true, value: session }
-  }
-
-  async function signInStaff(emailInput: string, password: string): Promise<Result<Session>> {
-    const email = emailOf(emailInput)
-    if (!email || !password) return fail("refused")
-    const who = await overlap(email)
-    if (who === "unread") return fail("unreadable")
-    if (who === "both" || who === "buyer") return fail("refused")
-    const member = await repo.findStaff(email)
-    if (!member || !(await passwords.verify(password, member.passwordHash))) return fail("refused")
-    const session: Session = {
-      id: ids.next(),
-      role: "staff",
-      email,
-      buyerName: null,
-      squareCustomerId: null,
       expiresAt: new Date(now().getTime() + sessionDays * 86_400_000).toISOString(),
     }
     await repo.createSession(session)
@@ -346,6 +466,7 @@ export function createOrdering(deps: OrderingDeps) {
     lines: LineRecord[],
     waiting: ChangeRecord | null,
     onHand: Record<string, number> | "unread" | "omit",
+    allowActions = false,
   ): Promise<OrderView> {
     const showHand = onHand !== "omit"
     return {
@@ -373,9 +494,8 @@ export function createOrdering(deps: OrderingDeps) {
       address: order.address,
       deliveryNote: order.deliveryNote,
       waitingChange: changeView(waiting),
-      ...(showHand
-        ? { actions: actionsFor(order, waiting != null), unitsOnHandUnreadable: onHand === "unread" }
-        : {}),
+      ...(showHand ? { unitsOnHandUnreadable: onHand === "unread" } : {}),
+      ...(allowActions ? { actions: actionsFor(order, waiting != null) } : {}),
     }
   }
 
@@ -386,13 +506,14 @@ export function createOrdering(deps: OrderingDeps) {
     return { order, lines, waiting }
   }
 
-  async function ordersFor(session: Session | null): Promise<Result<OrderView[]>> {
-    if (!session) return fail("forbidden")
+  async function ordersFor(viewer: Viewer): Promise<Result<OrderView[]>> {
+    if (!viewer || (!isStaffView(viewer) && viewer.role !== "buyer")) return fail("forbidden")
+    const staffView = isStaffView(viewer)
     const all = await repo.orders()
-    const visible = session.role === "staff" ? all : all.filter((order) => order.buyerEmail === session.email)
+    const visible = staffView ? all : all.filter((order) => order.buyerEmail === viewer.email)
     const [allLines, waiting] = await Promise.all([repo.allLines(), repo.waitingChanges()])
     let onHand: Record<string, number> | "unread" | "omit" = "omit"
-    if (session.role === "staff") {
+    if (staffView) {
       const location = await square.location()
       if (location === "unread") onHand = "unread"
       else {
@@ -400,6 +521,7 @@ export function createOrdering(deps: OrderingDeps) {
         onHand = skuIds.length === 0 ? {} : await square.onHand(skuIds, location.id)
       }
     }
+    const allowActions = isActing(viewer)
     const views: OrderView[] = []
     for (const order of visible) {
       views.push(
@@ -408,24 +530,26 @@ export function createOrdering(deps: OrderingDeps) {
           allLines.filter((line) => line.orderId === order.id),
           waiting.find((change) => change.orderId === order.id) ?? null,
           onHand,
+          allowActions,
         ),
       )
     }
     return { ok: true, value: views }
   }
 
-  async function orderFor(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!session) return fail("forbidden")
+  async function orderFor(viewer: Viewer, orderId: string): Promise<Result<OrderView>> {
+    if (!viewer || (!isStaffView(viewer) && viewer.role !== "buyer")) return fail("forbidden")
+    const staffView = isStaffView(viewer)
     const loaded = await loadOrder(orderId)
     if (!loaded) return fail("not-found")
-    if (session.role === "buyer" && loaded.order.buyerEmail !== session.email) return fail("not-found")
+    if (!staffView && loaded.order.buyerEmail !== viewer.email) return fail("not-found")
     let onHand: Record<string, number> | "unread" | "omit" = "omit"
-    if (session.role === "staff") {
+    if (staffView) {
       const location = await square.location()
       if (location === "unread") onHand = "unread"
       else onHand = await square.onHand(loaded.lines.map((line) => line.skuId), location.id)
     }
-    return { ok: true, value: await viewOrder(loaded.order, loaded.lines, loaded.waiting, onHand) }
+    return { ok: true, value: await viewOrder(loaded.order, loaded.lines, loaded.waiting, onHand, isActing(viewer)) }
   }
 
   async function placeOrder(session: Session | null, input: PlaceInput): Promise<Result<OrderView>> {
@@ -621,8 +745,9 @@ export function createOrdering(deps: OrderingDeps) {
     return { ok: true, value: await viewOrder(loaded.order, loaded.lines, null, "omit") }
   }
 
-  async function approveChange(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!staff(session)) return fail("forbidden")
+  async function approveChange(actor: Viewer, orderId: string): Promise<Result<OrderView>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     const loaded = await loadOrder(orderId)
     if (!loaded) return fail("not-found")
     if (!loaded.waiting) return fail("not-found")
@@ -685,76 +810,88 @@ export function createOrdering(deps: OrderingDeps) {
         deliveryNote: fresh.order.fulfillment === "delivery" ? payload.deliveryNote : null,
       }
       await repo.applyChange(order, lines, fresh.waiting.id, now().toISOString())
-      const location = await square.location()
-      const onHand =
-        location === "unread" ? "unread" : await square.onHand(lines.map((line) => line.skuId), location.id)
-      return { ok: true as const, value: await viewOrder(order, lines, null, onHand) }
+      await note(gate.acting, gate.actedLocal, "Approved", orderId, null)
+      return orderFor(gate.acting, orderId)
     })
   }
 
-  async function denyChange(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!staff(session)) return fail("forbidden")
+  async function denyChange(actor: Viewer, orderId: string): Promise<Result<OrderView>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     const loaded = await loadOrder(orderId)
     if (!loaded?.waiting) return fail("not-found")
     await repo.setChangeStatus(loaded.waiting.id, "denied", now().toISOString())
-    return orderFor(session, orderId)
+    await note(gate.acting, gate.actedLocal, "Denied", orderId, null)
+    return orderFor(gate.acting, orderId)
   }
 
-  async function confirmOrder(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!staff(session)) return fail("forbidden")
+  async function confirmOrder(actor: Viewer, orderId: string): Promise<Result<OrderView>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     const loaded = await loadOrder(orderId)
     if (!loaded) return fail("not-found")
     if (loaded.order.confirmation !== "unconfirmed") return fail("cannot-advance")
     if (loaded.order.step === "completed" || loaded.order.step === "canceled") return fail("cannot-advance")
     await repo.setConfirmation(orderId, "confirmed")
-    return orderFor(session, orderId)
+    await note(gate.acting, gate.actedLocal, "Confirmed", orderId, null)
+    return orderFor(gate.acting, orderId)
   }
 
-  async function advanceOrder(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!staff(session)) return fail("forbidden")
+  async function advanceOrder(actor: Viewer, orderId: string): Promise<Result<OrderView>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     return serialize(async () => {
       const loaded = await loadOrder(orderId)
       if (!loaded) return fail("not-found")
       const waiting = loaded.waiting != null
       const { step, confirmation } = loaded.order
+      let action = ""
       if (step === "proposed") {
         if (confirmation !== "confirmed") return fail("unconfirmed")
         await repo.setStep(orderId, "reserved")
+        action = "Reserved"
       } else if (step === "reserved") {
         await repo.setStep(orderId, "prepared")
+        action = "Prepared"
       } else if (step === "prepared") {
         if (confirmation !== "confirmed") return fail("unconfirmed")
         if (waiting) return fail("change-waiting")
         await repo.complete(orderId)
+        action = "Completed"
       } else {
         return fail("cannot-advance")
       }
-      return orderFor(session, orderId)
+      await note(gate.acting, gate.actedLocal, action, orderId, null)
+      return orderFor(gate.acting, orderId)
     })
   }
 
-  async function cancelOrder(session: Session | null, orderId: string): Promise<Result<OrderView>> {
-    if (!staff(session)) return fail("forbidden")
+  async function cancelOrder(actor: Viewer, orderId: string): Promise<Result<OrderView>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     return serialize(async () => {
       const loaded = await loadOrder(orderId)
       if (!loaded) return fail("not-found")
       if (loaded.order.step === "completed" || loaded.order.step === "canceled") return fail("cannot-advance")
       await repo.cancel(orderId, now().toISOString())
-      return orderFor(session, orderId)
+      await note(gate.acting, gate.actedLocal, "Canceled", orderId, null)
+      return orderFor(gate.acting, orderId)
     })
   }
 
-  async function deliveryMap(session: Session | null): Promise<Result<MapZip[]>> {
-    if (!staff(session)) return fail("forbidden")
+  async function deliveryMap(actor: Viewer): Promise<Result<MapZip[]>> {
+    if (!isStaffView(actor)) return fail("forbidden")
     return mapZips()
   }
 
-  async function setDeliveryZip(session: Session | null, code: string, open: boolean): Promise<Result<MapZip[]>> {
-    if (!staff(session)) return fail("forbidden")
+  async function setDeliveryZip(actor: Viewer, code: string, open: boolean): Promise<Result<MapZip[]>> {
+    const gate = await ready(actor)
+    if (typeof gate === "string") return fail(gate)
     const map = await mapZips()
     if (!map.ok) return map
     if (!map.value.some((zip) => zip.code === code)) return fail("not-on-map")
     await repo.setZipToggle(code, open)
+    await note(gate.acting, gate.actedLocal, `${open ? "Opened" : "Closed"} ${code}`, null, code)
     return mapZips()
   }
 
@@ -797,9 +934,18 @@ export function createOrdering(deps: OrderingDeps) {
   return {
     requestBuyerCode,
     signInBuyer,
-    signInStaff,
     signOut,
     sessionFor,
+    ensureFirstManager,
+    admit,
+    enterPin,
+    actingFor,
+    saveStaff,
+    addManager,
+    clearManagerEmail,
+    removeStaff,
+    staffDirectory,
+    staffRecord,
     lineFor,
     placeOrder,
     ordersFor,

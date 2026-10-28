@@ -1,30 +1,27 @@
 ---
+import PinForm from "../../../components/PinForm.astro"
 import Steps from "../../../components/Steps.astro"
 import Shell from "../../../layouts/Shell.astro"
-import { loadPage, money, when } from "../../../server/app.ts"
+import { loadPage, money, staffLinks, when } from "../../../server/app.ts"
 
-const { ordering, session, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
-if (!session) return Astro.redirect("/")
-if (session.role !== "staff") return Astro.redirect("/")
+const { ordering, open, acting, error } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
+if (!open) return Astro.redirect("/")
 const orderId = Astro.params.id ?? ""
-const result = await ordering.orderFor(session, orderId)
+const result = await ordering.orderFor(acting ?? open, orderId)
 if (!result.ok) return Astro.redirect("/staff")
 const order = result.value
 const nextLabel = order.actions?.advance === "reserved" ? "Mark Reserved" : order.actions?.advance === "prepared" ? "Mark Prepared" : order.actions?.advance === "completed" ? "Mark Completed" : ""
-const links = [
-  { href: "/staff", label: "Orders", current: true },
-  { href: "/staff/delivery", label: "Delivery zips" },
-  { href: "/keystatic", label: "Ordering copy" },
-]
+const pinError = Astro.url.searchParams.get("error") === "refused" ? "That PIN does not name a Staff member." : error
 ---
 
-<Shell title={order.buyerName} account="Staff" links={links}>
+<Shell title={order.buyerName} account={acting?.name ?? "Staff"} links={staffLinks("orders")} signOut={false}>
   <div class="order-head">
     <h1>{order.buyerName}</h1>
     <p class={order.confirmation}>{order.confirmation === "confirmed" ? "Confirmed" : "Unconfirmed"}</p>
   </div>
+  <PinForm acting={acting} returnPath={`/staff/orders/${order.id}`} />
   <Steps step={order.step} />
-  {error ? <p class="error">{error}</p> : null}
+  {pinError ? <p class="error">{pinError}</p> : null}
   <p>{order.seasonName} · {order.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {when(order.scheduledLocal)}</p>
   {order.address ? <p>{order.address.street}, {order.address.city}, {order.address.state} {order.address.zip} · {order.address.phone}</p> : null}
   {order.deliveryNote ? <p>{order.deliveryNote}</p> : null}
@@ -85,18 +82,24 @@ const links = [
       ))}
       <p>{when(order.waitingChange.scheduledLocal)}</p>
       {order.waitingChange.address ? <p>{order.waitingChange.address.street}, {order.waitingChange.address.zip} · {order.waitingChange.address.phone}</p> : null}
-      <div class="choice">
-        <form method="post" action="/api/act">
-          <input type="hidden" name="intent" value="approve" />
-          <input type="hidden" name="orderId" value={order.id} />
-          <button class="primary" type="submit">Approve</button>
-        </form>
-        <form method="post" action="/api/act">
-          <input type="hidden" name="intent" value="deny" />
-          <input type="hidden" name="orderId" value={order.id} />
-          <button class="quiet" type="submit">Deny</button>
-        </form>
-      </div>
+      {order.actions?.approve || order.actions?.deny ? (
+        <div class="choice">
+          {order.actions?.approve ? (
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="approve" />
+              <input type="hidden" name="orderId" value={order.id} />
+              <button class="primary" type="submit">Approve</button>
+            </form>
+          ) : null}
+          {order.actions?.deny ? (
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="deny" />
+              <input type="hidden" name="orderId" value={order.id} />
+              <button class="quiet" type="submit">Deny</button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   ) : null}
 </Shell>

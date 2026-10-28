@@ -8,6 +8,8 @@ import type {
   OrderRecord,
   Repo,
   Session,
+  StaffLogEntry,
+  StaffRecord,
   Step,
 } from "../domain/types.ts"
 
@@ -59,16 +61,45 @@ type LineRow = {
 }
 
 export function createD1Repo(db: SqlDatabase): Repo {
+  const staffOf = (row: { id: string; name: string; email: string | null; pin: string | null } | null): StaffRecord | null =>
+    row ? { id: row.id, name: row.name, email: row.email, pin: row.pin } : null
+
   return {
-    async findStaff(email) {
-      return db.prepare("SELECT email, password_hash AS passwordHash FROM staff WHERE email = ?").bind(email).first()
+    async listStaff() {
+      const rows = await db.prepare("SELECT id, name, email, pin FROM staff ORDER BY name, id").all<StaffRecord>()
+      return rows.results ?? []
     },
-    async insertStaff(email, passwordHash) {
-      await db.prepare("INSERT INTO staff (email, password_hash) VALUES (?, ?)").bind(email, passwordHash).run()
+    async findStaffById(id) {
+      return staffOf(await db.prepare("SELECT id, name, email, pin FROM staff WHERE id = ?").bind(id).first())
     },
-    async countStaff() {
-      const row = await db.prepare("SELECT COUNT(*) AS n FROM staff").first<{ n: number }>()
-      return Number(row?.n ?? 0)
+    async findStaffByEmail(email) {
+      return staffOf(await db.prepare("SELECT id, name, email, pin FROM staff WHERE email = ?").bind(email).first())
+    },
+    async findStaffByPin(pin) {
+      return staffOf(await db.prepare("SELECT id, name, email, pin FROM staff WHERE pin = ?").bind(pin).first())
+    },
+    async insertStaff(row) {
+      await db.prepare("INSERT INTO staff (id, name, email, pin) VALUES (?, ?, ?, ?)").bind(row.id, row.name, row.email, row.pin).run()
+    },
+    async updateStaff(row) {
+      await db.prepare("UPDATE staff SET name = ?, email = ?, pin = ? WHERE id = ?").bind(row.name, row.email, row.pin, row.id).run()
+    },
+    async deleteStaff(id) {
+      await db.prepare("DELETE FROM staff WHERE id = ?").bind(id).run()
+    },
+    async insertStaffLog(entry: StaffLogEntry) {
+      await db
+        .prepare("INSERT INTO staff_log (id, staff_name, action, order_id, zip, acted_local) VALUES (?, ?, ?, ?, ?, ?)")
+        .bind(entry.id, entry.staffName, entry.action, entry.orderId, entry.zip, entry.actedLocal)
+        .run()
+    },
+    async staffLog() {
+      const rows = await db
+        .prepare(
+          "SELECT id, staff_name AS staffName, action, order_id AS orderId, zip, acted_local AS actedLocal FROM staff_log ORDER BY acted_local DESC, id DESC",
+        )
+        .all<StaffLogEntry>()
+      return rows.results ?? []
     },
     async saveCode(email, codeHash, expiresAt) {
       await db

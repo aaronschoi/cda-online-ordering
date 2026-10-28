@@ -2,9 +2,9 @@
 import Shell from "../layouts/Shell.astro"
 import { loadPage } from "../server/app.ts"
 
-const { session } = await loadPage(Astro.locals, Astro.cookies, Astro.url)
+const { session, open, accessHeader } = await loadPage(Astro.locals, Astro.cookies, Astro.url, Astro.request)
 if (session?.role === "buyer") return Astro.redirect("/line")
-if (session?.role === "staff") return Astro.redirect("/staff")
+if (open && accessHeader) return Astro.redirect("/staff")
 
 const errorCode = Astro.url.searchParams.get("error")
 const sent = Astro.url.searchParams.get("sent") === "1"
@@ -20,40 +20,27 @@ const error = errorCode ? messages[errorCode] ?? "" : ""
 
 <Shell title="Sign in">
   <h1>Sign in</h1>
-  <p class="lede">CDA sells clothing wholesale. A Buyer signs in with a code sent to the Square Customer email. Staff sign in with a password for this app.</p>
+  <p class="lede">CDA sells clothing wholesale. A Buyer signs in with a code sent to the Square Customer email.</p>
   {error ? <p class="error">{error}</p> : null}
-  <div class="sign">
-    <form class="place" method="post" action="/api/act">
-      <input type="hidden" name="intent" value={sent ? "buyer-sign-in" : "request-code"} />
+  <form class="place" method="post" action="/api/act">
+    <input type="hidden" name="intent" value={sent ? "buyer-sign-in" : "request-code"} />
+    <label>
+      Buyer email
+      <input name="email" type="email" autocomplete="username" required value={email} />
+    </label>
+    {sent ? (
       <label>
-        Buyer email
-        <input name="email" type="email" autocomplete="username" required value={email} />
+        Sign-in code
+        <input name="code" inputmode="numeric" autocomplete="one-time-code" required />
       </label>
-      {sent ? (
-        <label>
-          Sign-in code
-          <input name="code" inputmode="numeric" autocomplete="one-time-code" required />
-        </label>
-      ) : null}
-      <button class="primary" type="submit">{sent ? "Sign in" : "Email a code"}</button>
-    </form>
-    <form class="place" method="post" action="/api/act">
-      <input type="hidden" name="intent" value="staff-sign-in" />
-      <label>
-        Staff email
-        <input name="email" type="email" autocomplete="username" required />
-      </label>
-      <label>
-        Password
-        <input name="password" type="password" autocomplete="current-password" required />
-      </label>
-      <button class="quiet" type="submit">Sign in as Staff</button>
-    </form>
-  </div>
+    ) : null}
+    <button class="primary" type="submit">{sent ? "Sign in" : "Email a code"}</button>
+  </form>
+  <p class="local"><a href="/staff">Staff</a></p>
   {import.meta.env.DEV ? (
     <p class="local">
       {devCode ? `Local inbox code: ${devCode}. ` : ""}
-      Local Staff sign-in is staff@cda.example with password cda-staff. The Buyer fixture is buyer@atelier.example.
+      Local staff pages open as staff@cda.example. Set the name and PIN under Staff. The Buyer fixture is buyer@atelier.example.
     </p>
   ) : null}
 </Shell>

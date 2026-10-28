@@ -22,6 +22,8 @@ export type Failure =
   | "zip-closed"
   | "not-on-map"
   | "bad-address"
+  | "last-manager"
+  | "taken"
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: Failure }
 
@@ -46,6 +48,32 @@ export type Session = {
   buyerName: string | null
   squareCustomerId: string | null
   expiresAt: string
+}
+
+export type Acting = {
+  role: "acting"
+  staffId: string
+  name: string
+}
+
+export type OpenStaff = {
+  role: "open"
+}
+
+export type StaffRecord = {
+  id: string
+  name: string
+  email: string | null
+  pin: string | null
+}
+
+export type StaffLogEntry = {
+  id: string
+  staffName: string
+  action: string
+  orderId: string | null
+  zip: string | null
+  actedLocal: string
 }
 
 export type Sku = {
@@ -120,11 +148,6 @@ export type Mailer = {
   sendSignInCode(email: string, code: string): Promise<void>
 }
 
-export type Passwords = {
-  hash(password: string): Promise<string>
-  verify(password: string, stored: string): Promise<boolean>
-}
-
 export type Ids = {
   next(): string
 }
@@ -193,9 +216,15 @@ export type Reservation = {
 }
 
 export type Repo = {
-  findStaff(email: string): Promise<{ email: string; passwordHash: string } | null>
-  insertStaff(email: string, passwordHash: string): Promise<void>
-  countStaff(): Promise<number>
+  listStaff(): Promise<StaffRecord[]>
+  findStaffById(id: string): Promise<StaffRecord | null>
+  findStaffByEmail(email: string): Promise<StaffRecord | null>
+  findStaffByPin(pin: string): Promise<StaffRecord | null>
+  insertStaff(row: StaffRecord): Promise<void>
+  updateStaff(row: StaffRecord): Promise<void>
+  deleteStaff(id: string): Promise<void>
+  insertStaffLog(entry: StaffLogEntry): Promise<void>
+  staffLog(): Promise<StaffLogEntry[]>
   saveCode(email: string, codeHash: string, expiresAt: string): Promise<void>
   findCode(email: string): Promise<{ codeHash: string; expiresAt: string } | null>
   deleteCode(email: string): Promise<void>

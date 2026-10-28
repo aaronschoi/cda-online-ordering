@@ -30,6 +30,16 @@ export function localToUtc(local: string, timeZone: string): Date | null {
   return result
 }
 
+export function formatLocal(date: Date, timeZone: string): string | null {
+  const parts = zoneParts(date, timeZone)
+  if (!parts) return null
+  const month = String(parts.month).padStart(2, "0")
+  const day = String(parts.day).padStart(2, "0")
+  const hour = String(parts.hour).padStart(2, "0")
+  const minute = String(parts.minute).padStart(2, "0")
+  return `${parts.year}-${month}-${day}T${hour}:${minute}`
+}
+
 export function isSeasonOpen(startsAt: string, endsAt: string, now: Date): boolean {
   const start = new Date(startsAt).getTime()
   const end = new Date(endsAt).getTime()

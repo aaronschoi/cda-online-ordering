@@ -1,6 +1,6 @@
 # An email belongs to Staff or to a Buyer
 
-An email is a Staff login or a Buyer's Square Customer email, not both. Staff sign in with a password. A Buyer signs in with a code sent to the Square Customer email. If the same email is both, sign-in is refused.
+Superseded in part by ADR 0025 and ADR 0026. Only a Manager has an email. A Staff member who is not a Manager has no email. A Buyer still signs in with a code sent to the Square Customer email. A code to a Manager's email is refused.
 
 ## Considered options
 

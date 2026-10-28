@@ -3,20 +3,56 @@ import { createD1Repo, type SqlDatabase } from "../adapters/d1.ts"
 import { schemaSql } from "../adapters/schema.ts"
 import { createSquare } from "../adapters/square.ts"
 import { failureText } from "../domain/failures.ts"
-import type { Failure } from "../domain/types.ts"
+import type { Acting, ContentPort, Failure, Mailer, Session } from "../domain/types.ts"
 import { createOrdering, type Ordering } from "../domain/ordering.ts"
-import { createPasswords } from "../domain/passwords.ts"
-import type { Mailer, Session } from "../domain/types.ts"
 
 export type Env = {
   DB: SqlDatabase
   SQUARE_ACCESS_TOKEN?: string
   SQUARE_LOCATION_ID?: string
   SQUARE_ENV?: string
-  STAFF_EMAIL?: string
-  STAFF_PASSWORD?: string
+  MANAGER_EMAIL?: string
   KEYSTATIC_GITHUB_REPO?: string
   GITHUB_TOKEN?: string
+}
+
+const quietContent: ContentPort = {
+  async season() {
+    return "unread"
+  },
+  async line() {
+    return "unread"
+  },
+  async deliveryCharge() {
+    return "unread"
+  },
+  async cutoffHours() {
+    return "unread"
+  },
+  async deliveryZips() {
+    return "unread"
+  },
+  async shapes() {
+    return "unread"
+  },
+  async intro() {
+    return "unread"
+  },
+}
+
+export function managerEmail(env: Env): string {
+  const configured = env.MANAGER_EMAIL?.trim().toLowerCase() ?? ""
+  if (configured) return configured
+  if (import.meta.env.DEV) return "staff@cda.example"
+  return ""
+}
+
+export function accessEmail(request: Request, env: Env): { email: string; header: boolean } | null {
+  const header = request.headers.get("CF-Access-Authenticated-User-Email")?.trim().toLowerCase() ?? ""
+  if (header) return { email: header, header: true }
+  const email = managerEmail(env)
+  if (import.meta.env.DEV && email) return { email, header: false }
+  return null
 }
 
 let ready: Promise<void> | null = null
@@ -32,19 +68,28 @@ export function prepare(env: Env): Promise<void> {
 }
 
 async function seed(env: Env) {
+  const info = await env.DB.prepare("PRAGMA table_info(staff)").all<{ name: string }>()
+  if ((info.results ?? []).some((column) => column.name === "password_hash")) {
+    await env.DB.prepare("DROP TABLE staff").run()
+  }
   const statements = schemaSql
     .split(";")
     .map((statement) => statement.trim())
     .filter((statement) => statement.length > 0)
     .map((statement) => env.DB.prepare(statement))
   await env.DB.batch(statements)
-  const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM staff").first<{ n: number }>()
-  if (Number(count?.n ?? 0) > 0) return
-  const dev = import.meta.env.DEV
-  const email = (env.STAFF_EMAIL || (dev ? "staff@cda.example" : "")).trim().toLowerCase()
-  const password = env.STAFF_PASSWORD || (dev ? "cda-staff" : "")
-  if (!email || !password) return
-  await env.DB.prepare("INSERT INTO staff (email, password_hash) VALUES (?, ?)").bind(email, await createPasswords().hash(password)).run()
+  const email = managerEmail(env)
+  if (!email) return
+  const ordering = createOrdering({
+    repo: createD1Repo(env.DB),
+    square: createSquare(env),
+    content: quietContent,
+    mailer: { async sendSignInCode() {} },
+    ids: { next: () => crypto.randomUUID() },
+    now: () => new Date(),
+  })
+  const created = await ordering.ensureFirstManager(email)
+  if (!created.ok && created.error === "unreadable") throw new Error("Manager email could not be checked")
 }
 
 export async function orderingFor(env: Env, mailer?: Mailer): Promise<Ordering> {
@@ -55,7 +100,6 @@ export async function orderingFor(env: Env, mailer?: Mailer): Promise<Ordering> 
     square: createSquare(env),
     content,
     mailer: mailer ?? { async sendSignInCode() {} },
-    passwords: createPasswords(),
     ids: { next: () => crypto.randomUUID() },
     now: () => new Date(),
   })
@@ -67,15 +111,44 @@ export function envOf(locals: App.Locals): Env {
 
 type Cookies = {
   get(name: string): { value: string } | undefined
+  delete(name: string, options?: { path?: string }): void
 }
 
-export async function loadPage(locals: App.Locals, cookies: Cookies, url: URL) {
-  const ordering = await orderingFor(envOf(locals))
+export async function loadPage(locals: App.Locals, cookies: Cookies, url: URL, request: Request) {
+  const env = envOf(locals)
+  const ordering = await orderingFor(env)
   const sessionId = cookies.get("cda_session")?.value
   const session = sessionId ? await ordering.sessionFor(sessionId) : null
   const code = url.searchParams.get("error")
   const error = code && code in failureText ? failureText[code as Failure] : ""
-  return { ordering, session, error }
+  const access = accessEmail(request, env)
+  const path = url.pathname
+  const staffArea = path.startsWith("/staff") || path.startsWith("/manage") || path.startsWith("/keystatic")
+  const admitted = access ? await ordering.admit(access.email) : { ok: false as const, error: "forbidden" as const }
+  let acting: Acting | null = null
+  if (admitted.ok && staffArea) {
+    const pin = cookies.get("cda_acting")?.value ?? ""
+    acting = pin ? await ordering.actingFor(pin) : null
+    if (pin && !acting) cookies.delete("cda_acting", { path: "/" })
+  }
+  return {
+    ordering,
+    session,
+    error,
+    open: admitted.ok ? admitted.value : null,
+    acting,
+    managerEmail: admitted.ok ? access?.email ?? "" : "",
+    accessHeader: access?.header ?? false,
+  }
+}
+
+export function staffLinks(current: "orders" | "zips" | "staff") {
+  return [
+    { href: "/staff", label: "Orders", current: current === "orders" },
+    { href: "/staff/delivery", label: "Delivery zips", current: current === "zips" },
+    { href: "/manage", label: "Staff", current: current === "staff" },
+    { href: "/keystatic", label: "Ordering copy" },
+  ]
 }
 
 export function money(cents: number): string {

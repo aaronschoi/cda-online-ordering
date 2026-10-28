@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro"
 import type { Address, Failure, Fulfillment } from "../../domain/types.ts"
-import { envOf, orderingFor } from "../../server/app.ts"
+import { accessEmail, envOf, orderingFor } from "../../server/app.ts"
 
 export const prerender = false
 
@@ -54,14 +54,56 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
     return redirect("/line")
   }
 
-  if (intent === "staff-sign-in") {
-    const result = await ordering.signInStaff(String(form.get("email") ?? ""), String(form.get("password") ?? ""))
-    if (!result.ok) return go("/", result.error)
-    cookies.set("cda_session", result.value.id, { ...cookie, maxAge: 60 * 60 * 24 * 14 })
-    return redirect("/staff")
+  const access = accessEmail(request, envOf(locals))
+  const admitted = access ? await ordering.admit(access.email) : { ok: false as const, error: "forbidden" as const }
+  const pin = cookies.get("cda_acting")?.value ?? ""
+  const acting = admitted.ok && pin ? await ordering.actingFor(pin) : null
+  if (pin && !acting) cookies.delete("cda_acting", { path: "/" })
+
+  if (intent === "enter-pin") {
+    const back = staffReturn(String(form.get("return") ?? "/staff"))
+    if (!admitted.ok) return go("/", admitted.error)
+    const result = await ordering.enterPin(String(form.get("pin") ?? ""))
+    if (!result.ok) return go(back, result.error)
+    cookies.set("cda_acting", String(form.get("pin") ?? ""), cookie)
+    return redirect(back)
   }
 
-  if (!session) return go("/")
+  if (intent === "clear-pin") {
+    cookies.delete("cda_acting", { path: "/" })
+    return redirect(staffReturn(String(form.get("return") ?? "/staff")))
+  }
+
+  if (intent === "save-staff" || intent === "add-manager" || intent === "remove-staff" || intent === "clear-email") {
+    if (!admitted.ok || !access) return go("/manage", "forbidden")
+    const id = String(form.get("id") ?? "")
+    if (intent === "save-staff") {
+      const result = await ordering.saveStaff(access.email, {
+        id: id || undefined,
+        name: String(form.get("name") ?? ""),
+        pin: String(form.get("pin") ?? ""),
+      })
+      return result.ok ? redirect("/manage") : go("/manage", result.error)
+    }
+    if (intent === "add-manager") {
+      const result = await ordering.addManager(access.email, {
+        name: String(form.get("name") ?? ""),
+        pin: String(form.get("pin") ?? ""),
+        email: String(form.get("email") ?? ""),
+      })
+      return result.ok ? redirect("/manage") : go("/manage", result.error)
+    }
+    if (intent === "clear-email") {
+      const result = await ordering.clearManagerEmail(access.email, id)
+      return result.ok ? redirect("/manage") : go("/manage", result.error)
+    }
+    const result = await ordering.removeStaff(access.email, id)
+    return result.ok ? redirect("/manage") : go("/manage", result.error)
+  }
+
+  if (intent === "place" || intent === "change" || intent === "withdraw") {
+    if (!session) return go("/")
+  }
 
   if (intent === "place") {
     const fulfillment = String(form.get("fulfillment") ?? "") as Fulfillment
@@ -100,33 +142,43 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
 
   const orderId = String(form.get("orderId") ?? "")
   const staffPath = `/staff/orders/${orderId}`
-  if (intent === "confirm") {
-    const result = await ordering.confirmOrder(session, orderId)
-    return result.ok ? redirect(staffPath) : go(staffPath, result.error)
-  }
-  if (intent === "advance") {
-    const result = await ordering.advanceOrder(session, orderId)
-    return result.ok ? redirect(staffPath) : go(staffPath, result.error)
-  }
-  if (intent === "cancel") {
-    const result = await ordering.cancelOrder(session, orderId)
-    return result.ok ? redirect(staffPath) : go(staffPath, result.error)
-  }
-  if (intent === "approve") {
-    const result = await ordering.approveChange(session, orderId)
-    return result.ok ? redirect(staffPath) : go(staffPath, result.error)
-  }
-  if (intent === "deny") {
-    const result = await ordering.denyChange(session, orderId)
-    return result.ok ? redirect(staffPath) : go(staffPath, result.error)
-  }
-  if (intent === "zip") {
+  const staffIntent = intent === "confirm" || intent === "advance" || intent === "cancel" || intent === "approve" || intent === "deny" || intent === "zip"
+  if (staffIntent) {
+    if (!acting) return go(intent === "zip" ? "/staff/delivery" : staffPath, "forbidden")
+    if (intent === "confirm") {
+      const result = await ordering.confirmOrder(acting, orderId)
+      return result.ok ? redirect(staffPath) : go(staffPath, result.error)
+    }
+    if (intent === "advance") {
+      const result = await ordering.advanceOrder(acting, orderId)
+      return result.ok ? redirect(staffPath) : go(staffPath, result.error)
+    }
+    if (intent === "cancel") {
+      const result = await ordering.cancelOrder(acting, orderId)
+      return result.ok ? redirect(staffPath) : go(staffPath, result.error)
+    }
+    if (intent === "approve") {
+      const result = await ordering.approveChange(acting, orderId)
+      return result.ok ? redirect(staffPath) : go(staffPath, result.error)
+    }
+    if (intent === "deny") {
+      const result = await ordering.denyChange(acting, orderId)
+      return result.ok ? redirect(staffPath) : go(staffPath, result.error)
+    }
     const open = String(form.get("open") ?? "") === "1"
-    const result = await ordering.setDeliveryZip(session, String(form.get("code") ?? ""), open)
+    const result = await ordering.setDeliveryZip(acting, String(form.get("code") ?? ""), open)
     return result.ok ? redirect("/staff/delivery") : go("/staff/delivery", result.error)
   }
 
   return go(back, "forbidden")
+}
+
+function staffReturn(value: string): string {
+  if (value.startsWith("/staff") || value.startsWith("/manage") || value.startsWith("/keystatic")) {
+    const url = new URL(value, "http://cda.local")
+    if (url.origin === "http://cda.local") return url.pathname
+  }
+  return "/staff"
 }
 
 function quantities(form: FormData) {
