@@ -1,31 +1,28 @@
 ---
 import { fill } from "../../domain/language.ts"
+import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
 import { drawZips } from "../../domain/map-draw.ts"
-import { loadPage } from "../../server/app.ts"
+import { loadPage, staffLinks } from "../../server/app.ts"
 
-const { ordering, session, error, language, copy } = await loadPage(
+const { ordering, open, acting, error, language, copy } = await loadPage(
   Astro.locals,
   Astro.cookies,
   Astro.url,
-  Astro.request.headers.get("accept-language"),
+  Astro.request,
 )
-if (!session) return Astro.redirect("/")
-if (session.role !== "staff") return Astro.redirect("/orders")
-const map = await ordering.deliveryMap(session)
+if (!open) return Astro.redirect("/")
+const map = await ordering.deliveryMap(acting ?? open)
 const drawn = map.ok ? drawZips(map.value) : []
 const byCode = new Map(drawn.map((shape) => [shape.code, shape]))
-const links = [
-  { href: "/staff", label: copy.nav.orders },
-  { href: "/staff/delivery", label: copy.nav.deliveryZips, current: true },
-  { href: "/keystatic", label: copy.nav.orderingCopy },
-]
+const pinError = Astro.url.searchParams.get("error") === "refused" ? copy.pin.missed : error
 ---
 
-<Shell title={copy.deliveryMap.title} account={copy.staff} links={links} language={language} requestUrl={Astro.url}>
+<Shell title={copy.deliveryMap.title} account={acting?.name ?? copy.staff} links={staffLinks("zips", language)} signOut={false} language={language} requestUrl={Astro.url}>
   <h1>{copy.deliveryMap.title}</h1>
   <p class="lede">{copy.deliveryMap.lede}</p>
-  {error ? <p class="error">{error}</p> : null}
+  <PinForm acting={acting} returnPath="/staff/delivery" language={language} />
+  {pinError ? <p class="error">{pinError}</p> : null}
   {map.ok ? (
     <>
       <svg class="map" viewBox="0 0 640 420" role="img" aria-label={copy.deliveryMap.mapLabel}>
@@ -42,12 +39,16 @@ const links = [
       </svg>
       <div class="zips">
         {map.value.map((zip) => (
-          <form method="post" action="/api/act">
-            <input type="hidden" name="intent" value="zip" />
-            <input type="hidden" name="code" value={zip.code} />
-            <input type="hidden" name="open" value={zip.open ? "0" : "1"} />
-            <button class={zip.open ? "primary" : "quiet"} type="submit">{fill(zip.open ? copy.deliveryMap.close : copy.deliveryMap.open, { name: zip.name })}</button>
-          </form>
+          acting ? (
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="zip" />
+              <input type="hidden" name="code" value={zip.code} />
+              <input type="hidden" name="open" value={zip.open ? "0" : "1"} />
+              <button class={zip.open ? "primary" : "quiet"} type="submit">{fill(zip.open ? copy.deliveryMap.close : copy.deliveryMap.open, { name: zip.name })}</button>
+            </form>
+          ) : (
+            <p>{fill(zip.open ? copy.deliveryMap.isOpen : copy.deliveryMap.isClosed, { name: zip.name })}</p>
+          )
         ))}
       </div>
     </>

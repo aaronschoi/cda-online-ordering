@@ -18,9 +18,10 @@ interface Props {
   account?: string
   language: Language
   requestUrl: URL
+  signOut?: boolean
 }
 
-const { title, links = [], account, language, requestUrl } = Astro.props
+const { title, links = [], account, language, requestUrl, signOut = true } = Astro.props
 const copy = phrases(language)
 ---
 
@@ -61,7 +62,7 @@ const copy = phrases(language)
           {links.map((link) => (
             <a href={link.href} aria-current={link.current ? "page" : undefined}>{link.label}</a>
           ))}
-          {account ? (
+          {account && signOut ? (
             <form method="post" action="/api/act">
               <input type="hidden" name="intent" value="sign-out" />
               <button type="submit">{copy.signOut}</button>

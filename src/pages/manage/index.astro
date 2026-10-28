@@ -1,0 +1,123 @@
+---
+import { fill } from "../../domain/language.ts"
+import PinForm from "../../components/PinForm.astro"
+import Shell from "../../layouts/Shell.astro"
+import { loadPage, staffLinks, when } from "../../server/app.ts"
+
+const { ordering, open, acting, error, managerEmail, language, copy } = await loadPage(
+  Astro.locals,
+  Astro.cookies,
+  Astro.url,
+  Astro.request,
+)
+if (!open || !managerEmail) return Astro.redirect("/")
+const [directory, record] = await Promise.all([
+  ordering.staffDirectory(managerEmail),
+  ordering.staffRecord(managerEmail),
+])
+const staff = directory.ok ? directory.value : []
+const managers = staff.filter((member) => member.email).length
+---
+
+<Shell title={copy.staff} account={acting?.name ?? copy.staff} links={staffLinks("staff", language)} signOut={false} language={language} requestUrl={Astro.url}>
+  <h1>{copy.staff}</h1>
+  <p class="lede">{copy.manager.lede}</p>
+  <PinForm acting={acting} returnPath="/manage" language={language} ask={false} />
+  {error ? <p class="error">{error}</p> : null}
+  {directory.ok ? (
+    staff.map((member) => (
+      <div class="person">
+        <p class="role">{member.email ? fill(copy.manager.role, { email: member.email }) : copy.staff}</p>
+        <form class="person-edit" method="post" action="/api/act">
+          <input type="hidden" name="intent" value="save-staff" />
+          <input type="hidden" name="id" value={member.id} />
+          <label>
+            {copy.manager.name}
+            <input name="name" required value={member.name} />
+          </label>
+          <label>
+            {copy.manager.pin}
+            <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required value={member.pin ?? ""} />
+          </label>
+          <button class="primary" type="submit">{copy.manager.save}</button>
+        </form>
+        {member.email && managers <= 1 ? null : (
+          <div class="choice">
+            {member.email ? (
+              <form method="post" action="/api/act">
+                <input type="hidden" name="intent" value="clear-email" />
+                <input type="hidden" name="id" value={member.id} />
+                <button class="quiet" type="submit">{copy.manager.clearEmail}</button>
+              </form>
+            ) : null}
+            <form method="post" action="/api/act">
+              <input type="hidden" name="intent" value="remove-staff" />
+              <input type="hidden" name="id" value={member.id} />
+              <button class="quiet" type="submit">{copy.manager.remove}</button>
+            </form>
+          </div>
+        )}
+      </div>
+    ))
+  ) : (
+    <p class="error">{copy.manager.listUnread}</p>
+  )}
+  <form class="place manage-add" method="post" action="/api/act">
+    <h2>{copy.manager.addStaff}</h2>
+    <input type="hidden" name="intent" value="save-staff" />
+    <label>
+      {copy.manager.name}
+      <input name="name" required />
+    </label>
+    <label>
+      {copy.manager.pin}
+      <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
+    </label>
+    <button class="primary" type="submit">{copy.manager.addStaff}</button>
+  </form>
+  <form class="place" method="post" action="/api/act">
+    <h2>{copy.manager.addManager}</h2>
+    <input type="hidden" name="intent" value="add-manager" />
+    <label>
+      {copy.manager.name}
+      <input name="name" required />
+    </label>
+    <label>
+      {copy.manager.email}
+      <input name="email" type="email" autocomplete="off" required />
+    </label>
+    <label>
+      {copy.manager.pin}
+      <input name="pin" inputmode="numeric" autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" required />
+    </label>
+    <button class="primary" type="submit">{copy.manager.addManager}</button>
+  </form>
+  <h2>{copy.manager.logTitle}</h2>
+  {record.ok && record.value.length === 0 ? <p class="empty">{copy.manager.logEmpty}</p> : null}
+  {record.ok && record.value.length > 0 ? (
+    <table>
+      <thead>
+        <tr>
+          <th>{copy.staff}</th>
+          <th>{copy.manager.logAction}</th>
+          <th>{copy.orders.when}</th>
+          <th>{copy.manager.logTarget}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {record.value.map((entry) => (
+          <tr>
+            <td>{entry.staffName}</td>
+            <td>{entry.action}</td>
+            <td>{when(entry.actedLocal, language)}</td>
+            <td>
+              {entry.orderId ? <a href={`/staff/orders/${entry.orderId}`}>{copy.order.title}</a> : null}
+              {entry.zip ? entry.zip : null}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : null}
+  {record.ok ? null : <p class="error">{copy.manager.logUnread}</p>}
+</Shell>

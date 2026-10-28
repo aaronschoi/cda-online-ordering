@@ -93,6 +93,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .main { padding: 36px 40px 64px; max-width: 920px; }
 h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+h2 { font-size: 18px; font-weight: 600; margin: 28px 0 12px; }
 .lede { margin: 0 0 28px; max-width: 62ch; color: var(--muted); }
 .error {
   margin: 0 0 20px;
@@ -173,6 +174,25 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .map text { font-size: 13px; fill: var(--ink); }
 .zips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .sign { display: grid; gap: 28px; max-width: 420px; }
+.pin-bar {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  margin: 0 0 28px;
+}
+.pin-bar p { margin: 0 0 8px; }
+.pin-bar input { width: 96px; }
+.person { padding: 16px 0; border-top: 1px solid var(--rule); }
+.person-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px auto;
+  gap: 12px;
+  align-items: end;
+  margin: 0;
+  max-width: none;
+}
+.person .role { margin: 0 0 8px; color: var(--muted); }
+.manage-add { margin: 28px 0; }
 .local {
   margin-top: 32px;
   color: var(--muted);
@@ -189,5 +209,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .sku { grid-template-columns: 56px 1fr; }
   .sku input { grid-column: 2; }
   .address { grid-template-columns: 1fr; }
+  .person-edit { grid-template-columns: 1fr; }
   table { display: block; overflow-x: auto; }
 }

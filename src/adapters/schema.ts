@@ -1,7 +1,18 @@
 export const schemaSql = `
 CREATE TABLE IF NOT EXISTS staff (
-  email TEXT PRIMARY KEY,
-  password_hash TEXT NOT NULL
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  pin TEXT UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS staff_log (
+  id TEXT PRIMARY KEY,
+  staff_name TEXT NOT NULL,
+  action TEXT NOT NULL,
+  order_id TEXT,
+  zip TEXT,
+  acted_local TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sign_in_codes (

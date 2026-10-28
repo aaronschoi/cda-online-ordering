@@ -54,6 +54,30 @@ describe("site language", () => {
     expect(phrases("en").signIn.title).toBe("Sign in")
     expect(phrases("es").signIn.title).toBe("Entrar")
     expect(phrases("ko").signIn.title).toBe("로그인")
+    expect(phrases("en").signIn.lede).toBe(
+      "CDA sells clothing wholesale. A Buyer signs in with a code sent to the Square Customer email.",
+    )
+    expect(phrases("es").signIn.lede).toBe(
+      "CDA vende ropa al por mayor. Un comprador entra con un código enviado al correo del cliente de Square.",
+    )
+    expect(phrases("ko").signIn.lede).toBe(
+      "CDA는 의류를 도매합니다. 바이어는 Square 고객 이메일로 받은 코드로 로그인합니다.",
+    )
+  })
+
+  it("names a missed PIN and a Manager in the chosen language", () => {
+    expect(phrases("en").pin.missed).toBe("That PIN does not name a Staff member.")
+    expect(phrases("es").pin.missed).toBe("Ese PIN no corresponde a nadie del equipo.")
+    expect(phrases("ko").pin.missed).toBe("그 PIN은 스태프를 가리키지 않습니다.")
+    expect(fill(phrases("en").manager.role, { email: "staff@cda.example" })).toBe("Manager · staff@cda.example")
+    expect(fill(phrases("es").manager.role, { email: "staff@cda.example" })).toBe("Gerente · staff@cda.example")
+    expect(fill(phrases("ko").manager.role, { email: "staff@cda.example" })).toBe("매니저 · staff@cda.example")
+    expect(phrases("en").failures["last-manager"]).toBe("The last Manager stays.")
+    expect(phrases("es").failures["last-manager"]).toBe("El último gerente se queda.")
+    expect(phrases("ko").failures["last-manager"]).toBe("마지막 매니저는 남습니다.")
+    expect(phrases("en").failures.taken).toBe("That name, PIN, or email is already used.")
+    expect(phrases("es").failures.taken).toBe("Ese nombre, PIN o correo ya está en uso.")
+    expect(phrases("ko").failures.taken).toBe("그 이름, PIN 또는 이메일은 이미 사용 중입니다.")
   })
 
   it("explains a refused Buyer in the chosen language", () => {

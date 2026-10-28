@@ -1,25 +1,24 @@
 ---
+import PinForm from "../../components/PinForm.astro"
 import Shell from "../../layouts/Shell.astro"
-import { initial, loadPage, money, stepName, tint, when } from "../../server/app.ts"
+import { initial, loadPage, money, staffLinks, stepName, tint, when } from "../../server/app.ts"
 
-const { ordering, session, language, copy } = await loadPage(
+const { ordering, open, acting, error, language, copy } = await loadPage(
   Astro.locals,
   Astro.cookies,
   Astro.url,
-  Astro.request.headers.get("accept-language"),
+  Astro.request,
 )
-if (!session) return Astro.redirect("/")
-if (session.role !== "staff") return Astro.redirect("/orders")
-const orders = await ordering.ordersFor(session)
-const links = [
-  { href: "/staff", label: copy.nav.orders, current: true },
-  { href: "/staff/delivery", label: copy.nav.deliveryZips },
-  { href: "/keystatic", label: copy.nav.orderingCopy },
-]
+if (!open) return Astro.redirect("/")
+const orders = await ordering.ordersFor(acting ?? open)
+const pinError = Astro.url.searchParams.get("error") === "refused" ? copy.pin.missed : error
 ---
 
-<Shell title={copy.orders.title} account={copy.staff} links={links} language={language} requestUrl={Astro.url}>
+<Shell title={copy.orders.title} account={acting?.name ?? copy.staff} links={staffLinks("orders", language)} signOut={false} language={language} requestUrl={Astro.url}>
   <h1>{copy.orders.title}</h1>
+  <p class="lede">{copy.orders.beforePin}</p>
+  <PinForm acting={acting} returnPath="/staff" language={language} />
+  {pinError ? <p class="error">{pinError}</p> : null}
   {orders.ok && orders.value.length === 0 ? <p class="empty">{copy.orders.empty}</p> : null}
   {orders.ok && orders.value.length > 0 ? (
     <table>

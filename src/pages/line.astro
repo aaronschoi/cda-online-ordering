@@ -7,7 +7,7 @@ const { ordering, session, error, language, copy } = await loadPage(
   Astro.locals,
   Astro.cookies,
   Astro.url,
-  Astro.request.headers.get("accept-language"),
+  Astro.request,
 )
 if (!session) return Astro.redirect("/")
 if (session.role !== "buyer") return Astro.redirect("/staff")

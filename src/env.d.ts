@@ -13,8 +13,7 @@ declare namespace App {
         SQUARE_ACCESS_TOKEN?: string
         SQUARE_LOCATION_ID?: string
         SQUARE_ENV?: string
-        STAFF_EMAIL?: string
-        STAFF_PASSWORD?: string
+        MANAGER_EMAIL?: string
         KEYSTATIC_GITHUB_REPO?: string
         GITHUB_TOKEN?: string
       }

@@ -24,4 +24,6 @@ export const failureText: Record<Failure, string> = {
   "zip-closed": "That Delivery zip is not open.",
   "not-on-map": "That zip is not on the map.",
   "bad-address": "A Delivery address needs a street, city, state, zip, and phone number.",
+  "last-manager": "The last Manager stays.",
+  taken: "That name, PIN, or email is already used.",
 }

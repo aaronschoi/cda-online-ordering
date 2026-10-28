@@ -4,10 +4,13 @@ import type {
   OrderRecord,
   Repo,
   Session,
+  StaffLogEntry,
+  StaffRecord,
 } from "./types.ts"
 
 export function createMemoryRepo(options?: { togglesUnreadable?: () => boolean }): Repo {
-  const staff: { email: string; passwordHash: string }[] = []
+  const staff: StaffRecord[] = []
+  const staffLog: StaffLogEntry[] = []
   const codes: { email: string; codeHash: string; expiresAt: string }[] = []
   const sessions: Session[] = []
   const toggles = new Map<string, boolean>()
@@ -17,14 +20,37 @@ export function createMemoryRepo(options?: { togglesUnreadable?: () => boolean }
   const changes: ChangeRecord[] = []
 
   return {
-    async findStaff(email) {
-      return staff.find((row) => row.email === email) ?? null
+    async listStaff() {
+      return staff.map((row) => ({ ...row }))
     },
-    async insertStaff(email, passwordHash) {
-      staff.push({ email, passwordHash })
+    async findStaffById(id) {
+      const row = staff.find((member) => member.id === id)
+      return row ? { ...row } : null
     },
-    async countStaff() {
-      return staff.length
+    async findStaffByEmail(email) {
+      const row = staff.find((member) => member.email === email)
+      return row ? { ...row } : null
+    },
+    async findStaffByPin(pin) {
+      const row = staff.find((member) => member.pin === pin)
+      return row ? { ...row } : null
+    },
+    async insertStaff(row) {
+      staff.push({ ...row })
+    },
+    async updateStaff(row) {
+      const index = staff.findIndex((member) => member.id === row.id)
+      if (index >= 0) staff[index] = { ...row }
+    },
+    async deleteStaff(id) {
+      const index = staff.findIndex((member) => member.id === id)
+      if (index >= 0) staff.splice(index, 1)
+    },
+    async insertStaffLog(entry) {
+      staffLog.push({ ...entry })
+    },
+    async staffLog() {
+      return staffLog.map((entry) => ({ ...entry })).reverse()
     },
     async saveCode(email, codeHash, expiresAt) {
       const index = codes.findIndex((row) => row.email === email)
