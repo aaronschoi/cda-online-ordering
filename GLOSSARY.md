@@ -115,7 +115,7 @@ A way to receive an Order at a Delivery address. The Buyer can choose it only wh
 _Avoid_: Shipment
 
 **Delivery address**:
-The street, city, state, zip, and phone number a Buyer gives for a Delivery Order. The zip is chosen by selecting that Delivery zip's shape. Delivery cannot be chosen without a phone number. The Delivery zip is the first five digits of that zip, and any further digits stay on the address. A Change request may move it to a different zip only when that zip is an open Delivery zip. A change that keeps the same zip, including a change to the phone number, can be approved after that zip is closed or removed from the set. The address changes only through an approved Change request.
+The street, city, state, zip, and phone number a Buyer gives for a Delivery Order. Delivery cannot be chosen without a phone number. The Delivery zip is the first five digits of that zip, and any further digits stay on the address. A Change request may move it to a different zip only when that zip is an open Delivery zip. A change that keeps the same zip, including a change to the phone number, can be approved after that zip is closed or removed from the set. The address changes only through an approved Change request.
 _Avoid_: Shipping address
 
 **Delivery note**:
@@ -123,8 +123,8 @@ Optional text a Buyer may add to a Delivery Order about receiving it. It may be 
 _Avoid_: Instructions, comment
 
 **Delivery zip**:
-The five-digit code Staff can open or close for Delivery. It is shown only when it has a name and a shape. A Buyer chooses one by selecting that shape when placing an Order and when a Change request moves the Delivery address. Staff do not add a zip from the map, and they do not draw its shape. Closing a zip, or removing it from that set, leaves Orders already placed for it on Delivery. A removed zip cannot be chosen for a new Order or for a move.
-_Avoid_: Zone, section
+The five-digit code Staff can open or close for Delivery. The map shows one only when Keystatic has its code and name and the repo has its shape. Staff do not add a zip from the map. Closing a zip, or removing it from that set, leaves Orders already placed for it on Delivery. A removed zip cannot be chosen for a new Order or for a move.
+_Avoid_: Zone
 
 **Delivery charge**:
 One flat amount that may be added to every Delivery Order, fixed when the Order is placed. When it is zero or turned off, the Order has no delivery charge.
